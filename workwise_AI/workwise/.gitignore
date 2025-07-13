@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environment
+.env
+.venv/
+venv/
+env/
+ENV/
+*.env.*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Poetry
+poetry.lock
+poetry.toml # optional — if you don't want to share this
+
+# VS Code / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test outputs
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local data
+*.sqlite3
+*.db

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizBuddy Crew - Results</title>
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary: #7209b7;
+            --accent: #f72585;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --success: #38b000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 36px;
+            margin-bottom: 10px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .header h1::after {
+            content: '';
+            position: absolute;
+            width: 50%;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            bottom: -10px;
+            left: 25%;
+            border-radius: 2px;
+        }
+
+        .header p {
+            color: var(--dark);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .result-card {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .result-subtitle {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 24px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: var(--secondary);
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 16px;
+            white-space: pre-line;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.4);
+        }
+
+        .success-message {
+            background-color: var(--success);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .recommendations-section {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .recommendations-header {
+            font-size: 26px;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .recommendation-content {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary);
+            margin-bottom: 20px;
+            white-space: pre-line;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .checklist {
+            list-style-type: none;
+            margin: 20px 0;
+            padding: 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            position: relative;
+            padding-left: 30px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .checklist li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 20px auto;
+            }
+
+            .header h1 {
+                font-size: 28px;
+            }
+
+            .result-card {
+                padding: 20px;
+            }
+
+            .result-subtitle {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Business Consultation Results</h1>
+            <p>Thank you for using BizBuddy Crew! Below are the insights and recommendations based on your input.</p>
+        </div>
+
+        <div class="success-message">
+            Successfully processed your business consultation request!
+        </div>
+
+        <div class="result-card">
+            <h2 class="result-subtitle">Submitted Information</h2>
+
+            <div class="result-item">
+                <div class="result-label">Budget</div>
+                <div class="result-value">{{ result.budget }} INR</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Business Type</div>
+                <div class="result-value">{{ result.business_type }}</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Location</div>
+                <div class="result-value">{{ result.selected_district }}, {{ result.selected_state }}</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Experience</div>
+                <div class="result-value">{{ result.experience }}</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Availability</div>
+                <div class="result-value">{{ result.availability }}</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Location Type</div>
+                <div class="result-value">{{ result.location_type }}</div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Team Size</div>
+                <div class="result-value">{{ result.team_size }}</div>
+            </div>
+        </div>
+
+        <div class="recommendations-section">
+            <h2 class="recommendations-header">Our Recommendations</h2>
+
+            <div class="recommendation-content">
+                {% if result.recommendations %}
+                    {{ result.recommendations | safe }}
+                {% else %}
+                    Based on your input, our team recommends starting with a lean business model and focusing on validating your business idea through market research. Consider the following steps:
+
+                    <ul class="checklist">
+                        <li>Conduct market research to validate demand</li>
+                        <li>Develop a minimum viable product (MVP)</li>
+                        <li>Create a detailed business plan</li>
+                        <li>Explore local business support programs</li>
+                        <li>Network with local entrepreneurs</li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="btn-container">
+            <a href="/" class="btn">Start New Consultation</a>
+        </div>
+    </div>
+</body>
+</html>

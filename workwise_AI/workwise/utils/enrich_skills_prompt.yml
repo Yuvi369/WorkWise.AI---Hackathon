@@ -1,0 +1,9 @@
+enrich_skills_prompt: |
+  You are an AI skill matcher for IT tickets. Based on the following ticket description, identify the technical skills required to work on it.
+
+  Ticket Description:
+  {description}
+
+  Existing Skills (if any): {existing_skills}
+
+  Return only a Python list like ["LWC", "HTML", "CSS", "JavaScript"]. No explanation.
