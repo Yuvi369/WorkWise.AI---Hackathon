@@ -5,19 +5,12 @@ class BizBuddyTasks:
 
     def ticket_analyzer_task(self, agent, 
                             skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
                             ):
         additional_context = ""
         if skill_set:
             additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
         if description:
             additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
         return Task(
             description=dedent(f"""
                                
@@ -58,28 +51,22 @@ class BizBuddyTasks:
             """
         )
     
-    def ticket_analyzer_task(self, agent, 
-                            skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
-                            ):
+    def history_analyst_task(self, agent, 
+                            ticket_name, ticked_id, selected_employee):
         additional_context = ""
-        if skill_set:
-            additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
-        if description:
-            additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
+        if ticket_name:
+            additional_context += f"\n Name of the ticket need to be assigned: {ticket_name}"
+        if ticked_id:
+            additional_context += f"\n Ticket id: {ticked_id}"
+        if selected_employee:
+            additional_context += f"\n Selected Employee for Evaluation: {selected_employee}"
+      
         return Task(
             description=dedent(f"""
                                
-                You are a Ticket Analyzer Agent in an AI-powered workforce assignment system.
+                You are a History Analyst Agent in an AI-powered workforce management system.
 
-                Your task is to deeply analyze a new incoming ticket, understand the nature of the task (e.g., bug fix, feature request, performance issue), 
-                and identify the **core technical skills required** to complete this task successfully.
+                Your job is to evaluate whether the selected employee is a good fit for the ticket based on their past experience.
 
                 Use the following ticket details to guide your analysis:
                 {additional_context}
@@ -88,53 +75,54 @@ class BizBuddyTasks:
                 Reference the market analysis when generating your ideas.
                 {self.__tip_section()}
 
-                --- You must:
-                1. Classify the type of ticket (e.g., bug, enhancement, performance, UI issue, etc.)
-                2. Extract and normalize the technical skills required from the ticket description
-                3. Include any relevant secondary skills if the description implies them
-                4. Use the "Required skills mentioned by the user" as hints but not as the final list
-                5. Ensure the output list is comprehensive and avoids duplicates
+                You will have access to the employee's historical ticket records including:
+                - Titles, tags, and descriptions of previously completed tickets
+                - Ticket outcomes and performance ratings (if available)
+                - Skill domains used in past tickets
 
-                --- Output format should include:
-                - Ticket classification (1 line)
-                - Normalized list of required skills (as a Python list)
-                - Optional short explanation (2-3 lines) of how you inferred these skills
+                🧠 Your analysis should answer:
+                1. Has the employee worked on similar tickets before? If so, how often?
+                2. Are the skills required for this ticket aligned with the employee’s past work?
+                3. Was the employee successful in those tasks (if such metadata is available)?
 
-                Skill Set: {skill_set}
-                Description: {description}
+                📝 Output format:
+                - Confidence score (0-100)
+                - List of matching past tickets
+                - Short explanation of match rationale
+
+                Your reasoning will help the system decide if this employee should be considered a strong candidate for assignment.
+
+                Ticket Name: {ticket_name}
+                Ticket ID: {ticked_id}
+                Suggested Employees: {selected_employee}
             """),
             agent=agent,
             expected_output="""
                 {
-                    "ticket_type": "Bug",
-                    "required_skills": ["LWC", "JavaScript", "CSS"],
-                    "explanation": "The ticket refers to UI misalignment in a Lightning Web Component. It requires frontend styling knowledge and Salesforce LWC experience."
-                }
+                "confidence_score": 86,
+                "matching_tickets": [
+                    {"title": "Fix LWC modal alignment", "skills_used": ["LWC", "CSS"]},
+                    {"title": "UI bug in opportunity page", "skills_used": ["LWC", "HTML", "JS"]}
+                ],
+                "explanation": "The employee has resolved 2 similar tickets involving LWC and frontend bugs, with positive performance ratings."
+            }
             """
         )
     
-    def ticket_analyzer_task(self, agent, 
-                            skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
+    def skill_matcher_task(self, agent, 
+                            selected_employee, skill_set
                             ):
         additional_context = ""
         if skill_set:
             additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
-        if description:
-            additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
+        if selected_employee:
+            additional_context += f"\n Selected Employee for Evaluation: {selected_employee}"
         return Task(
             description=dedent(f"""
                                
-                You are a Ticket Analyzer Agent in an AI-powered workforce assignment system.
+                You are a Skill Matcher Agent in an AI-based employee assignment system.
 
-                Your task is to deeply analyze a new incoming ticket, understand the nature of the task (e.g., bug fix, feature request, performance issue), 
-                and identify the **core technical skills required** to complete this task successfully.
+                Your task is to evaluate how well the selected employee's **technical skills** align with the **skills required** to complete a ticket.
 
                 Use the following ticket details to guide your analysis:
                 {additional_context}
@@ -143,53 +131,50 @@ class BizBuddyTasks:
                 Reference the market analysis when generating your ideas.
                 {self.__tip_section()}
 
-                --- You must:
-                1. Classify the type of ticket (e.g., bug, enhancement, performance, UI issue, etc.)
-                2. Extract and normalize the technical skills required from the ticket description
-                3. Include any relevant secondary skills if the description implies them
-                4. Use the "Required skills mentioned by the user" as hints but not as the final list
-                5. Ensure the output list is comprehensive and avoids duplicates
+                You will receive:
+                - A list of normalized skills required for the current ticket
+                - The selected employee’s skill profile (e.g., from HRMS or past projects)
 
-                --- Output format should include:
-                - Ticket classification (1 line)
-                - Normalized list of required skills (as a Python list)
-                - Optional short explanation (2-3 lines) of how you inferred these skills
+                🔍 You must:
+                1. Compare each required skill with the employee's known skill set
+                2. Identify matching and missing skills
+                3. Score the match based on skill coverage and proficiency (if available)
+                4. Suggest whether this employee is a good technical fit for the ticket
+
+                📝 Output format:
+                - Skill match score (0–100)
+                - List of matched and unmatched skills
+                - Short justification
+
+                Your decision will guide the assignment coordinator in final task allocation.
 
                 Skill Set: {skill_set}
-                Description: {description}
+                Suggested Employees: {selected_employee}
             """),
             agent=agent,
             expected_output="""
                 {
-                    "ticket_type": "Bug",
-                    "required_skills": ["LWC", "JavaScript", "CSS"],
-                    "explanation": "The ticket refers to UI misalignment in a Lightning Web Component. It requires frontend styling knowledge and Salesforce LWC experience."
+                "match_score": 92,
+                "matched_skills": ["LWC", "JavaScript", "CSS"],
+                "missing_skills": [],
+                "explanation": "The employee has strong expertise in all required skills, with multiple LWC projects handled recently."
                 }
             """
         )
     
-    def ticket_analyzer_task(self, agent, 
-                            skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
+    def availability_task(self, agent, 
+                            selected_employee
                             ):
         additional_context = ""
-        if skill_set:
-            additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
-        if description:
-            additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
+        if selected_employee:
+            additional_context += f"\n Selected Employee for Evaluation: {selected_employee}"
+
         return Task(
             description=dedent(f"""
                                
-                You are a Ticket Analyzer Agent in an AI-powered workforce assignment system.
+                You are an Availability Agent in an AI-powered workforce management system.
 
-                Your task is to deeply analyze a new incoming ticket, understand the nature of the task (e.g., bug fix, feature request, performance issue), 
-                and identify the **core technical skills required** to complete this task successfully.
+                Your task is to determine whether the selected employee is currently **available** to be assigned a new ticket.
 
                 Use the following ticket details to guide your analysis:
                 {additional_context}
@@ -198,53 +183,47 @@ class BizBuddyTasks:
                 Reference the market analysis when generating your ideas.
                 {self.__tip_section()}
 
-                --- You must:
-                1. Classify the type of ticket (e.g., bug, enhancement, performance, UI issue, etc.)
-                2. Extract and normalize the technical skills required from the ticket description
-                3. Include any relevant secondary skills if the description implies them
-                4. Use the "Required skills mentioned by the user" as hints but not as the final list
-                5. Ensure the output list is comprehensive and avoids duplicates
+                You will have access to:
+                - Leave records (e.g., sick leave, vacation, WFH, etc.)
+                - Current assignments and workload from the HRMS system
+                - Employee working hours and shift schedules
 
-                --- Output format should include:
-                - Ticket classification (1 line)
-                - Normalized list of required skills (as a Python list)
-                - Optional short explanation (2-3 lines) of how you inferred these skills
+                ✅ You must:
+                1. Check if the employee is on leave or unavailable
+                2. Review the number of ongoing assignments
+                3. Assess if the employee has sufficient time and capacity to complete a new task
 
-                Skill Set: {skill_set}
-                Description: {description}
+                📝 Output format:
+                - Availability status: "Available" or "Unavailable"
+                - Reason (e.g., "on sick leave", "already assigned 3 high-priority tasks")
+                - Any suggested follow-up (optional)
+
+                Your response will directly influence task allocation decisions.
+
+                Suggested Employees: {selected_employee}
             """),
             agent=agent,
             expected_output="""
                 {
-                    "ticket_type": "Bug",
-                    "required_skills": ["LWC", "JavaScript", "CSS"],
-                    "explanation": "The ticket refers to UI misalignment in a Lightning Web Component. It requires frontend styling knowledge and Salesforce LWC experience."
+                    "availability": "Unavailable",
+                    "reason": "Currently on approved medical leave until 12th July",
+                    "suggestion": "Re-evaluate after the return date or consider another candidate"
                 }
             """
         )
     
-    def ticket_analyzer_task(self, agent, 
-                            skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
-                            ):
+    def policy_checker_task(self, agent, 
+                            description):
         additional_context = ""
-        if skill_set:
-            additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
         if description:
             additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
+    
         return Task(
             description=dedent(f"""
                                
-                You are a Ticket Analyzer Agent in an AI-powered workforce assignment system.
+                You are a Policy Checker Agent in an AI-powered workforce assignment system.
 
-                Your task is to deeply analyze a new incoming ticket, understand the nature of the task (e.g., bug fix, feature request, performance issue), 
-                and identify the **core technical skills required** to complete this task successfully.
+                Your role is to validate whether there are any **HR policies, rules, or department-specific restrictions** that could prevent an employee from working on a specific ticket.
 
                 Use the following ticket details to guide your analysis:
                 {additional_context}
@@ -253,53 +232,60 @@ class BizBuddyTasks:
                 Reference the market analysis when generating your ideas.
                 {self.__tip_section()}
 
-                --- You must:
-                1. Classify the type of ticket (e.g., bug, enhancement, performance, UI issue, etc.)
-                2. Extract and normalize the technical skills required from the ticket description
-                3. Include any relevant secondary skills if the description implies them
-                4. Use the "Required skills mentioned by the user" as hints but not as the final list
-                5. Ensure the output list is comprehensive and avoids duplicates
+                You have access to:
+                - Company-wide HR policies (via RAG or uploaded docs)
+                - Department rules (e.g., Finance, Legal, IT)
+                - Custom filters (e.g., "Interns can't handle client data", "Probation employees need approval")
 
-                --- Output format should include:
-                - Ticket classification (1 line)
-                - Normalized list of required skills (as a Python list)
-                - Optional short explanation (2-3 lines) of how you inferred these skills
+                ✅ You must:
+                1. Carefully read the task description and context
+                2. Identify any red flags based on HR or department policy
+                3. Flag whether assignment is allowed or restricted
+                4. Mention the exact rule that was triggered if restricted
 
-                Skill Set: {skill_set}
+                📝 Output format:
+                - status: "Allowed" or "Restricted"
+                - rule_triggered: [if any] (e.g., "Interns not allowed on high-priority finance tickets")
+                - explanation: (brief reason for the decision)
+
+                Your decision will ensure all assignments stay compliant with company policies.
+
                 Description: {description}
             """),
             agent=agent,
             expected_output="""
                 {
-                    "ticket_type": "Bug",
-                    "required_skills": ["LWC", "JavaScript", "CSS"],
-                    "explanation": "The ticket refers to UI misalignment in a Lightning Web Component. It requires frontend styling knowledge and Salesforce LWC experience."
+                    "status": "Restricted",
+                    "rule_triggered": "Interns are not permitted to handle tickets related to financial systems.",
+                    "explanation": "The task involves sensitive financial operations, which interns are restricted from handling as per company policy."
                 }
             """
         )
     
-    def ticket_analyzer_task(self, agent, 
-                            skill_set, description
-                            #selected_state, selected_district,
-                            #experience=None, availability=None, 
-                            #location_type=None, team_size=None
+    def assignment_coordinator_task(self, agent, 
+                            description, ticket_name, ticket_id, selected_employee
                             ):
         additional_context = ""
-        if skill_set:
-            additional_context += f"\n Required skills mentioned by the user to solve the ticket: {skill_set}"
+        if selected_employee:
+            additional_context += f"\n Selected Employee for Evaluation: {selected_employee}"
         if description:
             additional_context += f"\nDescription/Context for the ticket: {description}"
-        # if location_type:
-        #     additional_context += f"\nBusiness Location Type: {location_type}"
-        # if team_size:
-        #     additional_context += f"\nTeam Structure: {team_size}"
+        if ticket_name:
+            additional_context += f"\n Name of the ticket need to be assigned: {ticket_name}"
+        if ticket_id:
+            additional_context += f"\n Ticket id: {ticket_id}"
         return Task(
             description=dedent(f"""
                                
-                You are a Ticket Analyzer Agent in an AI-powered workforce assignment system.
+                You are the Assignment Coordinator Agent in an AI-powered ticket dispatch system.
 
-                Your task is to deeply analyze a new incoming ticket, understand the nature of the task (e.g., bug fix, feature request, performance issue), 
-                and identify the **core technical skills required** to complete this task successfully.
+                Your responsibility is to **review the final short-listed employees** and make a decision on **who should be assigned this ticket**.
+
+                Consider all data from the previous steps:
+                - Skills matching
+                - Ticket history and past experience
+                - Availability (leave status, workload)
+                - HR & department policy restrictions
 
                 Use the following ticket details to guide your analysis:
                 {additional_context}
@@ -308,212 +294,31 @@ class BizBuddyTasks:
                 Reference the market analysis when generating your ideas.
                 {self.__tip_section()}
 
-                --- You must:
-                1. Classify the type of ticket (e.g., bug, enhancement, performance, UI issue, etc.)
-                2. Extract and normalize the technical skills required from the ticket description
-                3. Include any relevant secondary skills if the description implies them
-                4. Use the "Required skills mentioned by the user" as hints but not as the final list
-                5. Ensure the output list is comprehensive and avoids duplicates
+                ✅ You must:
+                1. Pick the best candidate for assignment
+                2. Justify your decision based on their skills, availability, and experience
+                3. Ensure no policy violations exist
+                4. Clearly explain **why** the selected employee is best fit for the ticket
 
-                --- Output format should include:
-                - Ticket classification (1 line)
-                - Normalized list of required skills (as a Python list)
-                - Optional short explanation (2-3 lines) of how you inferred these skills
+                📝 Output format:
+                - selected_employee: "Name"
+                - reason: "Why this employee was chosen"
+                - fallback_suggestions: ["Alt1", "Alt2"] (optional)
 
-                Skill Set: {skill_set}
+                Suggested Employees: {selected_employee}
                 Description: {description}
+                Ticket Name: {ticket_name}
+                Ticket ID: {ticket_id}
             """),
             agent=agent,
             expected_output="""
                 {
-                    "ticket_type": "Bug",
-                    "required_skills": ["LWC", "JavaScript", "CSS"],
-                    "explanation": "The ticket refers to UI misalignment in a Lightning Web Component. It requires frontend styling knowledge and Salesforce LWC experience."
+                    "selected_employee": "Yuvaraj",
+                    "reason": "Yuvaraj has resolved similar LWC bugs in the past, is currently available, and no policy restrictions apply.",
+                    "fallback_suggestions": ["Akash", "Vasanth"]
                 }
             """
         )
-    
-    ############################################
-
-    # def business_ideas_task(self, agent, 
-    #                         user_budget, user_interests,
-    #                         selected_state, selected_district,
-    #                         experience=None, availability=None, 
-    #                         location_type=None, team_size=None):
-    #     additional_context = ""
-    #     if experience:
-    #         additional_context += f"\nUser Experience/Skills: {experience}"
-    #     if availability:
-    #         additional_context += f"\nTime Availability: {availability}"
-    #     if location_type:
-    #         additional_context += f"\nBusiness Location Type: {location_type}"
-    #     if team_size:
-    #         additional_context += f"\nTeam Structure: {team_size}"
-    #     return Task(
-    #         description=dedent(f"""
-    #             Based on the user's budget of {user_budget}, location ({selected_state, selected_district}), and interests ({user_interests}),
-    #             suggest viable business ideas.
-                
-    #             Consider:
-    #             1. The user's stated interests and how they might translate to business opportunities
-    #             2. Businesses that align with the market trends and gaps identified
-    #             3. Scalability of each business idea
-    #             4. Required skills and resources for each business{additional_context}
-    #             5. The user's experience and skills in relation to each business idea
-    #             6. How each business can accommodate the user's time availability
-    #             7. Suitability for the chosen location type (home, rented shop, online, shared workspace)
-    #             8. Appropriate team structure based on user's preferences
-                
-    #             Reference the market analysis when generating your ideas.
-    #             {self.__tip_section()}
-
-    #             Business budget: {user_budget}
-    #             Business Type: {user_interests}
-    #             Selected State: {selected_state}
-    #             selected_district: {selected_district}
-    #             additional_context: {additional_context} 
-    #         """),
-    #         agent=agent,
-    #         expected_output="""
-    #             A list of 5-8 potential business ideas that:
-    #             - Match the user's interests
-    #             - Take advantage of identified market opportunities
-    #             - Include brief explanations of why each idea is suitable
-    #             - Indicate the general requirements for each business
-    #             - Explain how the business leverages user's experience and skills
-    #             - Show how the business can work with user's time availability
-    #             - Demonstrate suitability for the chosen location type
-    #             - Account for the preferred team structure
-    #         """
-    #     )
-
-    # def market_analysis_task(self, agent, selected_state, selected_district, business_type=None):
-
-    #     business_context = ""
-    #     if business_type:
-    #         business_context = f"\nWith special focus on the {business_type} sector"
-
-    #     return Task(
-    #         description=dedent(f"""
-    #             Thoroughly analyze the market trends and business opportunities in {selected_state}, {selected_district}.
-    #             Focus on:
-    #             1. Current business demands in this location
-    #             2. Identification of market gaps and underserved needs
-    #             3. Consumer behavior trends specific to this area
-    #             4. Local economic factors that might impact new businesses{business_context}
-    #             5. Specific analysis of trends in the {business_type} sector in this region
-                
-    #             Your analysis should consider seasonal trends, demographic information, 
-    #             and any unique characteristics of {selected_state}, {selected_district}.
-    #             {self.__tip_section()}
-
-    #             Selected State: {selected_state}
-    #             selected_district: {selected_district}
-    #             Business Type: {business_type if business_type else "Not specified"}
-    #         """),
-    #         agent=agent,
-    #         expected_output="""
-    #         A comprehensive market analysis report that includes:
-    #         - Top 3-5 current business trends in the specified location
-    #         - Identified market gaps and opportunities
-    #         - Consumer behavior insights relevant to the area
-    #         - Local economic factors to consider for new businesses
-    #         - Specific insights about the requested business type (if specified)
-    #         - Demographic data that might impact business success
-    #         """
-    #     )
-
-    # def financial_evaluation_task(self, agent, user_budget, user_interests, selected_state=None, selected_district=None, location_type=None):
-
-    #     location_context = ""
-    #     if selected_state and selected_district:
-    #         location_context = f"\nLocation: {selected_district}, {selected_state}"
-        
-    #     location_type_context = ""
-    #     if location_type:
-    #         location_type_context = f"\nBusiness Location Type: {location_type}"
-
-    #     return Task(
-    #         description=dedent(f"""
-    #             Evaluate the financial feasibility of each business idea considering the user's budget of {user_budget}.
-            
-    #             For each business idea:
-    #             1. Estimate startup costs (equipment, location, licenses, etc.)
-    #             2. Projected monthly operational expenses
-    #             3. Potential return on investment timeline
-    #             4. Financial risks and potential mitigations{location_context}
-    #             5. Location-specific costs for {selected_district}, {selected_state} if applicable
-    #             6. Cost implications of the chosen location type ({location_type if location_type else "not specified"})
-                
-    #             Clearly identify which ideas are feasible within the specified budget.
-    #             {self.__tip_section()}
-
-    #             Business budget: {user_budget}
-    #             Business Type: {user_interests}{location_context}{location_type_context}
-    #         """),
-    #         agent=agent,
-    #         expected_output="""
-    #         A financial analysis for each proposed business idea including:
-    #         - Detailed startup cost breakdown
-    #         - Monthly operational expense estimates
-    #         - ROI projections (best and worst case scenarios)
-    #         - Risk assessment
-    #         - Clear yes/no determination on budget feasibility
-    #         - Location-specific financial considerations
-    #         - Cost implications based on location type
-    #         """
-    #     )
-    
-    # def final_recommendations_task(self, agent, user_budget, user_interests, selected_state, selected_district, experience=None, availability=None, location_type=None, team_size=None):
-
-    #     additional_context = ""
-    #     if experience:
-    #         additional_context += f"\nUser Experience/Skills: {experience}"
-    #     if availability:
-    #         additional_context += f"\nTime Availability: {availability}"
-    #     if location_type:
-    #         additional_context += f"\nBusiness Location Type: {location_type}"
-    #     if team_size:
-    #         additional_context += f"\nTeam Structure: {team_size}"
-
-    #     return Task(
-    #         description=dedent(f"""
-    #             Synthesize all previous analyses to provide final business recommendations for the user.
-            
-    #             Create a comprehensive recommendation that:
-    #             1. Presents the top 3 most viable business ideas based on market analysis and financial feasibility
-    #             2. Provides a detailed overview of each recommendation including why it's suitable for the user
-    #             3. Outlines next steps for implementation (licenses needed, location search tips, etc.)
-    #             4. Includes potential challenges and how to overcome them{additional_context}
-    #             5. Explains how each recommendation leverages the user's experience and skills
-    #             6. Details how each business can work with the user's time availability
-    #             7. Provides specific setup guidance for the chosen location type
-    #             8. Offers advice on team structure and hiring if applicable
-                
-    #             The recommendations should be personalized to the user's budget ({user_budget}), 
-    #             location ({selected_state}, {selected_district}), interests ({user_interests}),
-    #             experience, availability, location preferences, and team size plans.
-    #             {self.__tip_section()}
-
-    #             Business budget: {user_budget}
-    #             Business Type: {user_interests}
-    #             Selected State: {selected_state}
-    #             selected_district: {selected_district}{additional_context}
-    #         """),
-    #         agent=agent,
-    #         expected_output="""
-    #         A comprehensive business recommendation report including:
-    #         1. Executive summary
-    #         2. Top 3 recommended businesses with detailed rationale
-    #         3. Implementation roadmap for each recommendation
-    #         4. Resource requirements and potential challenges
-    #         5. Next steps advice
-    #         6. How each recommendation aligns with user's experience and skills
-    #         7. Suggestions for managing the business within user's time availability
-    #         8. Setup guidance for the specific location type
-    #         9. Team building and management recommendations
-    #         """
-    #     )
 
     def __tip_section(self):
         return "If you do your BEST WORK, I'll tip you $100!"

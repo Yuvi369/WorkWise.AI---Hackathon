@@ -26,10 +26,6 @@ class BizBuddyCrew:
     agents = BizBuddyAgents()
     tasks = BizBuddyTasks()
 
-    # business_analyst_agent = agents.business_analyst()
-    # market_researcher_agent = agents.market_researcher()
-    # financial_evaluator_agent = agents.financial_evaluator()
-    # final_recommender_agent = agents.final_recommender()
     ticket_analyzer_agent = agents.ticket_analyzer
     history_analyst_agent = agents.history_analyst
     skill_matcher_agent = agents.skill_matcher
@@ -41,69 +37,44 @@ class BizBuddyCrew:
       ticket_analyzer_agent,
       self.required_skills,
       self.description
-      # self.selected_state,
-      # self.selected_district,
-      # self.experience,
-      # self.availability,
-      # self.location_type,
-      # self.team_size
     )
 
     history_analyst_task  = tasks.history_analyst_task(
       history_analyst_agent,
-      self.selected_state,
-      self.selected_district,
-      self.business_type
+      self.ticket_name,
+      self.ticket_id,
+      self.suggested_employees
     )
 
     skill_matcher_task  = tasks.skill_matcher_task(
       skill_matcher_agent,
-      self.budget,
-      self.business_type,
-      self.location_type
+      self.suggested_employees,
+      self.required_skills
     )
 
     availability_task  = tasks.availability_task(
       availability_agent,
-      self.budget,
-      self.business_type,
-      self.selected_state,
-      self.selected_district,
-      self.experience,
-      self.availability,
-      self.location_type,
-      self.team_size
+      self.suggested_employees
     )
 
     policy_checker_task  = tasks.policy_checker_task(
       policy_checker_agent,
-      self.budget,
-      self.business_type,
-      self.selected_state,
-      self.selected_district,
-      self.experience,
-      self.availability,
-      self.location_type,
-      self.team_size
+      self.description
     )
 
     assignment_coordinator_task  = tasks.assignment_coordinator_task(
       assignment_coordinator_agent,
-      self.budget,
-      self.business_type,
-      self.selected_state,
-      self.selected_district,
-      self.experience,
-      self.availability,
-      self.location_type,
-      self.team_size
+      self.description,
+      self.ticket_name,
+      self.ticket_id,
+      self.suggested_employees
     )
 
     crew = Crew(
       agents=[
-        business_analyst_agent, market_researcher_agent, financial_evaluator_agent, final_recommender_agent
+        ticket_analyzer_agent, history_analyst_agent, skill_matcher_agent, availability_agent, policy_checker_agent, assignment_coordinator_agent
       ],
-      tasks=[business_ideas_task, market_analysis_task, financial_evaluation_task, final_recommendations_task],
+      tasks=[ticket_analyzer_task, history_analyst_task, skill_matcher_task, availability_task, policy_checker_task, assignment_coordinator_task],
       verbose=True
     )
 
