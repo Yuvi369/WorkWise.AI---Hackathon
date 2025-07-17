@@ -9,7 +9,7 @@ const MemberTable = ({ members, handleRemoveMember }) => (
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Name</th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Email</th>
           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Role</th>
-          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Actions</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500">Status</th>
         </tr>
       </thead>
       <tbody className="bg-white divide-y divide-gray-200">
@@ -33,19 +33,7 @@ const MemberTable = ({ members, handleRemoveMember }) => (
               </div>
             </td>
             <td className="px-6 py-4">
-              <div className="flex items-center space-x-2">
-                <button className="text-gray-400 hover:text-gray-600">
-                  <Edit size={16} />
-                </button>
-                {member.role !== 'Owner' && (
-                  <button 
-                    onClick={() => handleRemoveMember(member.id)}
-                    className="text-gray-400 hover:text-red-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+              <span className="text-sm font-medium text-gray-700">{member.status}</span>
             </td>
           </tr>
         ))}

@@ -1,20 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/authentication/LoginPage';
-import SignupPage from './pages/authentication/SignupPage';
-import WorkspacePage from './pages/authentication/WorkspacePage';
 import './styles/tailwind.css';
+import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-    return (
-        <Router>
-            <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/workspace" element={<WorkspacePage />} />
-                <Route path="/" element={<LoginPage />} />
-            </Routes>
-        </Router>
-    );
+  return (
+    <Router>
+      <div className='min-h-screen bg-gray-100'>
+        <AppRoutes />
+      </div>
+    </Router>
+  );
 }
 
 export default App;
