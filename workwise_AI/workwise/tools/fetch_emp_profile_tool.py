@@ -160,22 +160,6 @@ if __name__ == "__main__":
     # Test with specific employees
     employees = ["Brandon Castillo", "Mark Jenkins"]
     result = fetch_employee_profiles.func(employees, r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\tools\datasets\employees_db_1.xlsx")
-    print("📄 Profiles:", result)
+    print(f"**** {result}")
+    #print("📄 Profiles:", result)
     
-    # Test getting all employees
-    # print("\n" + "="*50)
-    # all_employees = get_all_employee_profiles("employees.xlsx")
-    # print("📄 All Employees:", all_employees)
-    
-    # # Example of expected Excel structure
-    # print("\n" + "="*50)
-    # print("📋 Expected Excel Structure:")
-    # print("Columns required:")
-    # print("- employee_name: Full name of the employee")
-    # print("- skills_set: Comma-separated skills (e.g., 'Python, AWS, Docker')")
-    # print("- create_date: Date when employee joined (YYYY-MM-DD or any date format)")
-    # print("\nExample data:")
-    # print("| employee_name  | skills_set              | create_date |")
-    # print("|----------------|-------------------------|-------------|")
-    # print("| Mark Jenkins   | Python, AWS, Docker     | 2020-01-15  |")
-    # print("| Brandon Castillo | Java, Spring, MySQL   | 2019-06-20  |")

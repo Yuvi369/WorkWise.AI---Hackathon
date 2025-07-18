@@ -1,7 +1,7 @@
 import pandas as pd
 from langchain.tools import tool
-from policy_report import generate_html_report
-from rag_sys.rag.main import RAG
+from tools.policy_report import generate_html_report
+from tools.rag_sys.rag.main import RAG
 import os
 from typing import Dict, List, Any
 import json

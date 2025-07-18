@@ -3,7 +3,7 @@ import faiss
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
-from rag_sys.rag.load_vect_db.delete_document import delete_by_filehash
+from tools.rag_sys.rag.load_vect_db.delete_document import delete_by_filehash
 
 class VectorStoreManager:
     def __init__(self, persist_directory, embedding_model):

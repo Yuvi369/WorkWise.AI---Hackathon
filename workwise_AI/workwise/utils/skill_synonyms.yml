@@ -6,6 +6,8 @@ lwc: LWC
 lightning web components: LWC
 html5: HTML
 css3: CSS
+css: CSS
+Css: CSS
 sf: Salesforce
 sales force: Salesforce
 apex: Apex

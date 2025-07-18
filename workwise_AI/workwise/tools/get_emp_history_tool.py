@@ -6,7 +6,7 @@ from langchain.tools import tool
 import json
 from typing import List, Dict, Any
 
-from history_report import generate_html_report
+from tools.history_report import generate_html_report
 # Load .env
 load_dotenv()
 

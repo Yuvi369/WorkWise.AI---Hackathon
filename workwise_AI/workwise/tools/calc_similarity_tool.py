@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional
 import re
 from dataclasses import dataclass
 
-from similarity_report import generate_html_report
+from tools.similarity_report import generate_html_report
 
 @dataclass
 class TicketRecord:

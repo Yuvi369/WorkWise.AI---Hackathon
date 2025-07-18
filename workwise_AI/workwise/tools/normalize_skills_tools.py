@@ -18,6 +18,9 @@ def normalize_skills(skills: list) -> list:
         else:
             normalized.append(clean.title())
 
+    print("+++++++++++++++++++ TOOL - normalize_skills +++++++++++++++")
+    print(list(set(normalized)))
+    print("-----------------------------------------------------------")
     return list(set(normalized))
 
 

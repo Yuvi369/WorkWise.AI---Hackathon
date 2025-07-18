@@ -1,13 +1,17 @@
+import sys
 import os
+
+# Dynamically add root directory to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 import traceback
 from typing import List
-from rag_sys.rag.utils.common import normalize_file_paths
-from rag_sys.rag.chat.rag_chain import rag_chain
-from rag_sys.rag.load_vect_db.load_and_process_document import load_and_process_document
-from rag_sys.rag.load_vect_db.metadata_manager import MetadataManager
-from rag_sys.rag.load_vect_db.vectorstore_manager import VectorStoreManager
-from rag_sys.rag.utils.compute_file_hash import compute_file_hash
-from rag_sys.rag.utils.config_loader import load_config
+from tools.rag_sys.rag.utils.common import normalize_file_paths
+from tools.rag_sys.rag.chat.rag_chain import rag_chain
+from tools.rag_sys.rag.load_vect_db.load_and_process_document import load_and_process_document
+from tools.rag_sys.rag.load_vect_db.metadata_manager import MetadataManager
+from tools.rag_sys.rag.load_vect_db.vectorstore_manager import VectorStoreManager
+from tools.rag_sys.rag.utils.compute_file_hash import compute_file_hash
+from tools.rag_sys.rag.utils.config_loader import load_config
 
 class RAG:
 

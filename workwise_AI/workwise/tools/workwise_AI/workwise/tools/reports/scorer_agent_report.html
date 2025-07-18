@@ -1,0 +1,212 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Employee Scoring Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+            .container { max-width: 1400px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .header { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+            .ticket-info { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+            .employee-card { background: white; border: 1px solid #ddd; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            .score-circle { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5em; font-weight: bold; margin: 0 auto 15px; }
+            .score-90-100 { background: linear-gradient(135deg, #28a745, #20c997); }
+            .score-80-89 { background: linear-gradient(135deg, #17a2b8, #007bff); }
+            .score-70-79 { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+            .score-60-69 { background: linear-gradient(135deg, #fd7e14, #dc3545); }
+            .score-below-60 { background: linear-gradient(135deg, #dc3545, #6f42c1); }
+            .score-breakdown { display: flex; justify-content: space-around; margin: 20px 0; }
+            .score-item { text-align: center; }
+            .score-bar { width: 100px; height: 10px; background: #e9ecef; border-radius: 5px; margin: 5px auto; }
+            .score-fill { height: 100%; border-radius: 5px; }
+            .strengths { background: #d4edda; padding: 15px; border-radius: 5px; margin: 10px 0; }
+            .concerns { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; }
+            .recommendation { font-weight: bold; font-size: 1.1em; margin: 15px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🎯 Employee Scoring Report</h1>
+                <p>Generated on: 2025-07-18 18:15:35</p>
+            </div>
+            
+            <div class="ticket-info">
+                <h2>📋 Ticket Information</h2>
+                <p><strong>Ticket Name:</strong> LWC Issue</p>
+                <p><strong>Description:</strong> Fix button layout issues and apply responsive design in LWC component.</p>
+            </div>
+            
+            <h2>👥 Employee Scores</h2>
+    
+            <div class="employee-card">
+                <h3>Mark Jenkins</h3>
+                <div class="score-circle score-below-60">50</div>
+                <div class="recommendation">Analysis failed</div>
+                
+                <div class="score-breakdown">
+                    <div class="score-item">
+                        <div>Skills</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #007bff;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Experience</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #28a745;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Availability</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #17a2b8;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Policy</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #ffc107;"></div></div>
+                        <div>50%</div>
+                    </div>
+                </div>
+                
+                <p><strong>Reasoning:</strong> Error occurred during scoring: 403 Request had insufficient authentication scopes. [reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+metadata {
+  key: "method"
+  value: "google.ai.generativelanguage.v1beta.GenerativeService.GenerateContent"
+}
+]</p>
+                
+                <div class="strengths">
+                    <strong>💪 Strengths:</strong>
+                    <ul>
+                        <li>Unable to determine</li>
+                    </ul>
+                </div>
+                
+                <div class="concerns">
+                    <strong>⚠️ Concerns:</strong>
+                    <ul>
+                        <li>Scoring system unavailable</li>
+                    </ul>
+                </div>
+            </div>
+        
+            <div class="employee-card">
+                <h3>Kenneth Simpson</h3>
+                <div class="score-circle score-below-60">50</div>
+                <div class="recommendation">Analysis failed</div>
+                
+                <div class="score-breakdown">
+                    <div class="score-item">
+                        <div>Skills</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #007bff;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Experience</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #28a745;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Availability</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #17a2b8;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Policy</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #ffc107;"></div></div>
+                        <div>50%</div>
+                    </div>
+                </div>
+                
+                <p><strong>Reasoning:</strong> Error occurred during scoring: 403 Request had insufficient authentication scopes. [reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+metadata {
+  key: "method"
+  value: "google.ai.generativelanguage.v1beta.GenerativeService.GenerateContent"
+}
+]</p>
+                
+                <div class="strengths">
+                    <strong>💪 Strengths:</strong>
+                    <ul>
+                        <li>Unable to determine</li>
+                    </ul>
+                </div>
+                
+                <div class="concerns">
+                    <strong>⚠️ Concerns:</strong>
+                    <ul>
+                        <li>Scoring system unavailable</li>
+                    </ul>
+                </div>
+            </div>
+        
+            <div class="employee-card">
+                <h3>Anthony Wright</h3>
+                <div class="score-circle score-below-60">50</div>
+                <div class="recommendation">Analysis failed</div>
+                
+                <div class="score-breakdown">
+                    <div class="score-item">
+                        <div>Skills</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #007bff;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Experience</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #28a745;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Availability</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #17a2b8;"></div></div>
+                        <div>50%</div>
+                    </div>
+                    <div class="score-item">
+                        <div>Policy</div>
+                        <div class="score-bar"><div class="score-fill" style="width: 50%; background: #ffc107;"></div></div>
+                        <div>50%</div>
+                    </div>
+                </div>
+                
+                <p><strong>Reasoning:</strong> Error occurred during scoring: 403 Request had insufficient authentication scopes. [reason: "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+domain: "googleapis.com"
+metadata {
+  key: "service"
+  value: "generativelanguage.googleapis.com"
+}
+metadata {
+  key: "method"
+  value: "google.ai.generativelanguage.v1beta.GenerativeService.GenerateContent"
+}
+]</p>
+                
+                <div class="strengths">
+                    <strong>💪 Strengths:</strong>
+                    <ul>
+                        <li>Unable to determine</li>
+                    </ul>
+                </div>
+                
+                <div class="concerns">
+                    <strong>⚠️ Concerns:</strong>
+                    <ul>
+                        <li>Scoring system unavailable</li>
+                    </ul>
+                </div>
+            </div>
+        
+        </div>
+    </body>
+    </html>
+    
