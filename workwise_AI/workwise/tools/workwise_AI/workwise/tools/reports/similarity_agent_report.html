@@ -1,0 +1,352 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Assignment Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .timestamp {
+            opacity: 0.9;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .current-ticket {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .matches-section {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        
+        .recommendations-section {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8em;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+        }
+        
+        .ticket-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .ticket-description {
+            font-size: 1.1em;
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            line-height: 1.7;
+        }
+        
+        .skills-container {
+            margin-top: 15px;
+        }
+        
+        .skills-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .skill-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.25);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin: 3px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .match-item {
+            background: rgba(255,255,255,0.15);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .match-item:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+        
+        .match-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .match-name {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .match-stats {
+            text-align: right;
+        }
+        
+        .similarity-score {
+            font-size: 1.2em;
+            font-weight: 700;
+        }
+        
+        .past-tickets {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .recommendation-item {
+            background: rgba(255,255,255,0.15);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .recommendation-item:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+        }
+        
+        .recommendation-item.warning {
+            border-left: 4px solid #ff6b6b;
+        }
+        
+        .recommendation-item.suggestion {
+            border-left: 4px solid #51cf66;
+        }
+        
+        .recommendation-item.info {
+            border-left: 4px solid #339af0;
+        }
+        
+        .rec-text {
+            font-size: 1.1em;
+            flex: 1;
+        }
+        
+        .stats-summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: 700;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .match-item {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .recommendation-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats-summary {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Ticket Assignment Report</h1>
+            <div class="timestamp">Generated on 2025-07-18 11:29:36</div>
+        </div>
+        
+        <div class="content">
+            <div class="section current-ticket">
+                <h2><span class="emoji">📋</span> Current Ticket</h2>
+                <div class="ticket-title">Database Backup Automation</div>
+                <div class="ticket-description">Set up automated daily backups for the production database to an S3 bucket.</div>
+                <div class="skills-container">
+                    <span class="skills-label">Required Skills:</span>
+                    <span class="skill-tag">AWS</span><span class="skill-tag">S3</span><span class="skill-tag">cloud computing</span><span class="skill-tag">storage services</span><span class="skill-tag">database management</span>
+                </div>
+            </div>
+            
+            <div class="section matches-section">
+                <h2><span class="emoji">🎯</span> Top Matches</h2>
+                <div class="stats-summary">
+                    <div class="stat-item">
+                        <span class="stat-number">5</span>
+                        <span class="stat-label">Candidates</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">8.2%</span>
+                        <span class="stat-label">Best Match</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">31</span>
+                        <span class="stat-label">Total Experience</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">13</span>
+                        <span class="stat-label">Total Employees</span>
+                    </div>
+                </div>
+                
+        <div class="match-item">
+            <div class="match-info">
+                <span class="emoji">👤</span>
+                <span class="match-name">Mark Jenkins</span>
+            </div>
+            <div class="match-stats">
+                <div class="similarity-score" style="color: rgba(255,255,255,0.9);">8.2%</div>
+                <div class="past-tickets">11 past tickets</div>
+            </div>
+        </div>
+        
+        <div class="match-item">
+            <div class="match-info">
+                <span class="emoji">👤</span>
+                <span class="match-name">Angel Mason</span>
+            </div>
+            <div class="match-stats">
+                <div class="similarity-score" style="color: rgba(255,255,255,0.7);">2.6%</div>
+                <div class="past-tickets">6 past tickets</div>
+            </div>
+        </div>
+        
+        <div class="match-item">
+            <div class="match-info">
+                <span class="emoji">👤</span>
+                <span class="match-name">Shirley Walker</span>
+            </div>
+            <div class="match-stats">
+                <div class="similarity-score" style="color: rgba(255,255,255,0.7);">2.1%</div>
+                <div class="past-tickets">9 past tickets</div>
+            </div>
+        </div>
+        
+        <div class="match-item">
+            <div class="match-info">
+                <span class="emoji">👤</span>
+                <span class="match-name">Kenneth Simpson</span>
+            </div>
+            <div class="match-stats">
+                <div class="similarity-score" style="color: rgba(255,255,255,0.7);">1.6%</div>
+                <div class="past-tickets">3 past tickets</div>
+            </div>
+        </div>
+        
+        <div class="match-item">
+            <div class="match-info">
+                <span class="emoji">👤</span>
+                <span class="match-name">Lauren Ryan</span>
+            </div>
+            <div class="match-stats">
+                <div class="similarity-score" style="color: rgba(255,255,255,0.7);">1.6%</div>
+                <div class="past-tickets">2 past tickets</div>
+            </div>
+        </div>
+        
+            </div>
+            
+            <div class="section recommendations-section">
+                <h2><span class="emoji">💡</span> Recommendations</h2>
+                
+        <div class="recommendation-item warning">
+            <span class="emoji">❌</span>
+            <span class="rec-text">No employees found with strong similarity to this ticket</span>
+        </div>
+        
+        <div class="recommendation-item suggestion">
+            <span class="emoji">💼</span>
+            <span class="rec-text">Consider experienced employees: Mark Jenkins</span>
+        </div>
+        
+            </div>
+        </div>
+    </div>
+</body>
+</html>

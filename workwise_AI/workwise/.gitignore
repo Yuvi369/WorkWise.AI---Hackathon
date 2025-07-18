@@ -42,3 +42,5 @@ htmlcov/
 # Local data
 *.sqlite3
 *.db
+
+workwise\tools\datasets

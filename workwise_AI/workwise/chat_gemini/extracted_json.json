@@ -3,7 +3,7 @@
     "ticket_number": "JIRA-567",
     "description": "The GET request to `/api/v1/laptops` fails with a 500 error.",
     "assignee": null,
-    "priority": "High",
+    "priority": "high",
     "status": "TO-DO",
     "skill_set": null
 }

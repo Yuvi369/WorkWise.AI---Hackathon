@@ -30,8 +30,8 @@ def chat_main(user_prompt=None):
     # Example input if not provided
     if not user_prompt:
         user_prompt = """
-        This is a high priority ticket. "The GET request to `/api/v1/laptops` fails with a 500 error."
-        Show the assignee report for this ticket Ticket Name: API Endpoint Not Responding -  JIRA-567.
+        This is a high priority ticket. "
+        Show the assignee report for this ticket Ticket Name: API Endpoint Not Responding.
         """
 
     # Send message to Gemini

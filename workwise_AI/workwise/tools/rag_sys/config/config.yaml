@@ -1,0 +1,29 @@
+app:
+  document_file_paths: [
+            # r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\rag_sys\Document_3.pdf",
+            D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\tools\rag_sys\Document_3.pdf
+            
+        ]
+  delete_file_path: [
+            # "C:/Users/Trainee/Downloads/tortoise_story.pdf",
+            # "C:/Users/Trainee/Downloads/health.pdf",
+            # "C:/Users/Trainee/Downloads/HR-Policies.pdf"
+        ]
+  # query: "what is the company's name?"
+  rag_prompt_name: "rag_system_prompt"
+  use_cache: false
+  # use_cache: true
+  top_k: 3
+
+llm:
+  model: "gemini-2.0-flash"
+  # model: "gpt-3.5-turbo"
+
+cache:
+  cache_file: "rag_cache.json"
+  threshold: 0.80
+  max_size: 100
+
+vector_db:
+  vectorstore_path: "./vectorstore"
+  embedding_model: "sentence-transformers/all-mpnet-base-v2"
