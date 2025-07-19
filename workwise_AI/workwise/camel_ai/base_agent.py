@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import re
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -77,16 +78,24 @@ class BaseAgent:
         self.message_history.append(message)
         context = self._build_context(message)
         
+        print(f"🧠 Agent {self.name} processing message...")
+        print(f"📝 Context sent to LLM: {context[:200]}...")
+        
         try:
             response = self.model.generate_content(context)
             response_text = response.text
             
+            print(f"🤖 Raw LLM Response: {response_text}")
+            
             # Parse response for tool usage or collaboration
             if "TOOL_USE:" in response_text:
+                print("🔧 Detected tool usage request")
                 return self._handle_tool_request(response_text, message.sender)
             elif "COLLABORATE:" in response_text:
+                print("🤝 Detected collaboration request")
                 return self._handle_collaboration(response_text, message.sender)
             else:
+                print("💬 Returning direct response")
                 return Message(
                     sender=self.name,
                     receiver=message.sender,
@@ -96,6 +105,7 @@ class BaseAgent:
                     metadata={"analysis_type": self.specialization}
                 )
         except Exception as e:
+            print(f"❌ Error in process_message: {e}")
             return Message(
                 sender=self.name,
                 receiver=message.sender,
@@ -105,11 +115,15 @@ class BaseAgent:
             )
     
     def _build_context(self, message: Message) -> str:
+        tools_description = ""
+        for tool_name, tool in self.tools.items():
+            tools_description += f"- {tool_name}: {tool.description}\n"
+        
         context = f"""
 You are {self.name}, a {self.role} specialized in {self.specialization}.
 
 Available tools:
-{', '.join(self.tools.keys())}
+{tools_description}
 
 Recent message history:
 {self._format_message_history()}
@@ -118,9 +132,15 @@ Current message from {message.sender}:
 {message.content}
 
 Instructions:
-1. If you need to use a tool, respond with: TOOL_USE: tool_name {{"param": "value"}}
-2. If you need to collaborate with another agent, respond with: COLLABORATE: agent_name message
+1. To use a tool, respond with: TOOL_USE: tool_name {{"param1": "value1", "param2": "value2"}}
+2. To collaborate with another agent, respond with: COLLABORATE: agent_name message
 3. Otherwise, provide a direct response to complete the task.
+
+IMPORTANT: When using tools, make sure the JSON parameters are properly formatted with double quotes around keys and string values.
+
+Examples:
+- TOOL_USE: get_employee_history {{"employees": ["John Doe", "Jane Smith"], "skills": ["Python", "AWS"]}}
+- TOOL_USE: calculate_similarity {{"ticket_name": "Database Setup", "description": "Setup MySQL database", "skills": ["MySQL", "Database"]}}
 
 Response:
 """
@@ -134,22 +154,79 @@ Response:
         return "\n".join(formatted)
     
     def _handle_tool_request(self, response_text: str, original_sender: str) -> Message:
+        print(f"🔧 Parsing tool request from: {response_text}")
+        
         try:
+            # Extract the tool part
             tool_part = response_text.split("TOOL_USE:")[1].strip()
-            parts = tool_part.split(" ", 1)
-            tool_name = parts[0]
-            params = json.loads(parts[1]) if len(parts) > 1 else {}
+            print(f"🔧 Tool part: {tool_part}")
             
-            if tool_name in self.tools:
-                result = self.tools[tool_name].execute(params)
+            # Try to find the tool name and JSON parameters
+            # Look for pattern: tool_name {json}
+            pattern = r'(\w+)\s*(\{.*\})'
+            match = re.search(pattern, tool_part, re.DOTALL)
+            
+            if match:
+                tool_name = match.group(1)
+                json_str = match.group(2)
+                print(f"🔧 Tool name: {tool_name}")
+                print(f"🔧 JSON string: {json_str}")
+                
+                # Clean up the JSON string
+                json_str = json_str.strip()
+                
+                # Try to parse JSON
+                try:
+                    params = json.loads(json_str)
+                    print(f"🔧 Parsed params: {params}")
+                except json.JSONDecodeError as json_err:
+                    print(f"❌ JSON parsing failed: {json_err}")
+                    # Try to fix common JSON issues
+                    json_str = self._fix_json_string(json_str)
+                    try:
+                        params = json.loads(json_str)
+                        print(f"🔧 Fixed and parsed params: {params}")
+                    except json.JSONDecodeError:
+                        print(f"❌ JSON still invalid after fixing: {json_str}")
+                        return Message(
+                            sender=self.name,
+                            receiver=original_sender,
+                            message_type=MessageType.RESULT,
+                            content=f"Tool execution failed: Invalid JSON format in parameters: {json_str}",
+                            timestamp=time.time()
+                        )
+                
+                if tool_name in self.tools:
+                    print(f"🔧 Executing tool: {tool_name} with params: {params}")
+                    result = self.tools[tool_name].execute(params)
+                    print(f"🔧 Tool result: {result}")
+                    
+                    return Message(
+                        sender=self.name,
+                        receiver=original_sender,
+                        message_type=MessageType.TOOL_RESPONSE,
+                        content=f"Tool {tool_name} executed: {json.dumps(result)}",
+                        timestamp=time.time()
+                    )
+                else:
+                    return Message(
+                        sender=self.name,
+                        receiver=original_sender,
+                        message_type=MessageType.RESULT,
+                        content=f"Tool execution failed: Unknown tool '{tool_name}'. Available tools: {list(self.tools.keys())}",
+                        timestamp=time.time()
+                    )
+            else:
                 return Message(
                     sender=self.name,
                     receiver=original_sender,
-                    message_type=MessageType.TOOL_RESPONSE,
-                    content=f"Tool {tool_name} executed: {json.dumps(result)}",
+                    message_type=MessageType.RESULT,
+                    content=f"Tool execution failed: Could not parse tool name and parameters from: {tool_part}",
                     timestamp=time.time()
                 )
+                
         except Exception as e:
+            print(f"❌ Exception in _handle_tool_request: {e}")
             return Message(
                 sender=self.name,
                 receiver=original_sender,
@@ -157,6 +234,19 @@ Response:
                 content=f"Tool execution failed: {str(e)}",
                 timestamp=time.time()
             )
+    
+    def _fix_json_string(self, json_str: str) -> str:
+        """Try to fix common JSON formatting issues"""
+        # Replace single quotes with double quotes
+        json_str = json_str.replace("'", '"')
+        
+        # Fix unquoted keys (basic attempt)
+        json_str = re.sub(r'(\w+):', r'"\1":', json_str)
+        
+        # Fix double-quoted keys that got double-quoted
+        json_str = re.sub(r'""(\w+)"":', r'"\1":', json_str)
+        
+        return json_str
     
     def _handle_collaboration(self, response_text: str, original_sender: str) -> Message:
         try:

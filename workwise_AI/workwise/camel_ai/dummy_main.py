@@ -1,364 +1,373 @@
 import os
 import json
-import requests
-import time
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, asdict
-from enum import Enum
 import google.generativeai as genai
+from typing import Dict, List, Any, Optional
+from dotenv import load_dotenv
 
-api_key = "AIzaSyB0A8MFwq-y1gaH2WmcClMkwxwujfWjmSM"
-# Configure Gemini API
-genai.configure(api_key=api_key)
+# Import the HTML report generator
+from tools_camel.summary_report import generate_html, save_html_report
+from tools_camel.dummy_tool import build_employee_profiles
 
-class MessageType(Enum):
-    TASK_ASSIGNMENT = "task_assignment"
-    TOOL_REQUEST = "tool_request"
-    TOOL_RESPONSE = "tool_response"
-    COLLABORATION = "collaboration"
-    RESULT = "result"
+load_dotenv()
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-@dataclass
-class Message:
-    sender: str
-    receiver: str
-    message_type: MessageType
-    content: str
-    timestamp: float
-    metadata: Dict[str, Any] = None
+from ticket_analyzer import TicketAnalyzerAgents
+from history_analyst import HistoryAnalyst
+#from skill_matcher import SkillEvaluator
+from tools_camel.fetch_emp_profile_tool import fetch_employee_profiles
+from tools_camel.normalize_skills_tools import normalize_skills
+from availability_checker import AvailabilityCheckerAgent
+from policy_checker import PolicyChecker
 
-    def to_dict(self):
-        return asdict(self)
+def normalize_skills(required_skills):
+    """Normalize skills (placeholder - implement based on your logic)"""
+    return [skill.strip().lower() for skill in required_skills]
 
-class Tool:
-    def __init__(self, name: str, description: str):
-        self.name = name
-        self.description = description
+def fetch_employee_profiles(suggested_employee, emp_db_path):
+    """Fetch employee profiles (placeholder - implement based on your logic)"""
+    # This should return employee profile data
+    return {"employees": suggested_employee, "profiles": "fetched"}
+
+def serialize_agent_result(result):
+    """
+    Convert agent result to JSON-serializable format
     
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        raise NotImplementedError
-
-class WebSearchTool(Tool):
-    def __init__(self):
-        super().__init__("web_search", "Search the web for information")
-    
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        query = params.get("query", "")
-        # Simulated web search - in real implementation, use actual search API
-        results = [
-            f"Search result 1 for '{query}': Lorem ipsum dolor sit amet",
-            f"Search result 2 for '{query}': Consectetur adipiscing elit",
-            f"Search result 3 for '{query}': Sed do eiusmod tempor incididunt"
-        ]
-        return {
-            "status": "success",
-            "results": results,
-            "query": query
-        }
-
-class DataAnalysisTool(Tool):
-    def __init__(self):
-        super().__init__("data_analysis", "Analyze data and generate insights")
-    
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        data = params.get("data", [])
-        analysis_type = params.get("type", "summary")
+    Args:
+        result: Agent result (could be Message object, dict, or other types)
         
-        if analysis_type == "summary":
-            return {
-                "status": "success",
-                "analysis": {
-                    "total_records": len(data),
-                    "data_type": type(data).__name__,
-                    "summary": "Data analysis completed successfully"
-                }
-            }
-        elif analysis_type == "trend":
-            return {
-                "status": "success",
-                "analysis": {
-                    "trend": "upward",
-                    "confidence": 0.85,
-                    "insights": ["Positive growth trend detected", "Data shows consistent improvement"]
-                }
-            }
-
-class CodeGenerationTool(Tool):
-    def __init__(self):
-        super().__init__("code_generation", "Generate code based on requirements")
-    
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        language = params.get("language", "python")
-        requirements = params.get("requirements", "")
-        
-        # Simulated code generation
-        if language == "python":
-            code = f"""
-def solve_problem():
-    # Generated code for: {requirements}
-    print("Solution implemented")
-    return "success"
-
-if __name__ == "__main__":
-    solve_problem()
-"""
+    Returns:
+        JSON-serializable dictionary
+    """
+    try:
+        if hasattr(result, '__dict__'):
+            # If it's an object with attributes, convert to dict
+            serialized = {}
+            for key, value in result.__dict__.items():
+                try:
+                    # Try to serialize the value
+                    json.dumps(value)
+                    serialized[key] = value
+                except (TypeError, ValueError):
+                    # If value is not serializable, convert to string
+                    serialized[key] = str(value)
+            return serialized
+        elif isinstance(result, dict):
+            # If it's already a dict, check if all values are serializable
+            serialized = {}
+            for key, value in result.items():
+                try:
+                    json.dumps(value)
+                    serialized[key] = value
+                except (TypeError, ValueError):
+                    serialized[key] = str(value)
+            return serialized
+        elif isinstance(result, (list, tuple)):
+            # Handle lists and tuples
+            serialized = []
+            for item in result:
+                try:
+                    json.dumps(item)
+                    serialized.append(item)
+                except (TypeError, ValueError):
+                    serialized.append(str(item))
+            return serialized
         else:
-            code = f"// Generated {language} code for: {requirements}"
+            # For other types, convert to string
+            return str(result)
+    except Exception as e:
+        print(f"⚠️  Warning: Could not serialize agent result: {e}")
+        return {"error": f"Serialization failed: {str(e)}", "raw_content": str(result)[:500]}
+
+def get_final_employee_recommendation(agent_results: Dict[str, Any], 
+                                    ticket_info: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Send all agent results to Gemini API and get final employee recommendation
+    
+    Args:
+        agent_results: Dictionary containing all 5 agent results
+        ticket_info: Dictionary containing ticket information
+        
+    Returns:
+        Dictionary with recommended employee and reasoning
+    """
+    
+    try:
+        # Initialize Gemini model
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Serialize all agent results to ensure JSON compatibility
+        serialized_results = {}
+        for agent_name, result in agent_results.items():
+            print(f"📝 Serializing {agent_name} result...")
+            serialized_results[agent_name] = serialize_agent_result(result)
+        
+        # Create comprehensive prompt for Gemini
+        prompt = f"""
+You are an expert AI system for employee assignment decisions. I will provide you with analysis results from 5 different specialized agents that have evaluated a ticket assignment scenario. Your task is to analyze all the information and recommend the BEST employee for this assignment.
+
+TICKET INFORMATION:
+- Ticket Name: {ticket_info.get('name', 'N/A')}
+- Ticket ID: {ticket_info.get('id', 'N/A')}
+- Description: {ticket_info.get('description', 'N/A')}
+- Priority: {ticket_info.get('priority', 'N/A')}
+- Due Date: {ticket_info.get('due_date', 'N/A')}
+- Required Skills: {ticket_info.get('required_skills', [])}
+- Suggested Employees: {ticket_info.get('suggested_employees', [])}
+
+AGENT ANALYSIS RESULTS:
+
+1. TICKET ANALYZER AGENT RESULT:
+{json.dumps(serialized_results.get('ticket_analyzer', {}), indent=2)}
+
+2. HISTORY ANALYST AGENT RESULT:
+{json.dumps(serialized_results.get('history_analyst', {}), indent=2)}
+
+3. SKILL MATCHER AGENT RESULT:
+{json.dumps(serialized_results.get('skill_matcher', {}), indent=2)}
+
+4. AVAILABILITY CHECKER AGENT RESULT:
+{json.dumps(serialized_results.get('availability_checker', {}), indent=2)}
+
+5. POLICY CHECKER AGENT RESULT:
+{json.dumps(serialized_results.get('policy_checker', {}), indent=2)}
+
+INSTRUCTIONS:
+1. Carefully analyze each agent's findings
+2. Consider the following factors in your decision:
+   - Skill match and proficiency level
+   - Historical performance and success rate
+   - Current availability and workload
+   - Policy compliance and risk factors
+   - Ticket complexity and urgency
+   
+3. Provide your recommendation in the following JSON format:
+{{
+    "recommended_employee": "Employee Name or ID",
+    "confidence_score": 0.95,
+    "reasoning": {{
+        "primary_factors": ["List of main reasons for this choice"],
+        "skill_analysis": "Why this employee's skills match best",
+        "availability_analysis": "Analysis of availability and workload",
+        "risk_assessment": "Any risks or concerns identified",
+        "alternative_options": "Brief mention of other viable candidates if any"
+    }},
+    "assignment_recommendations": {{
+        "estimated_completion_time": "X hours/days",
+        "success_probability": 0.90,
+        "monitoring_points": ["Key areas to monitor during assignment"],
+        "support_needed": ["Any additional support or resources needed"]
+    }}
+}}
+
+4. If no employee is suitable, recommend "NONE" and explain why in the reasoning.
+5. Be thorough but concise in your analysis.
+6. Consider both technical and soft factors in your decision.
+
+RECOMMENDATION:
+"""
+        
+        # Generate response from Gemini
+        print("🧠 Sending agent results to Gemini API for final recommendation...")
+        response = model.generate_content(prompt)
+        response_text = response.text
+        
+        print(f"🤖 Gemini API Response: {response_text[:200]}...")
+        
+        # Try to parse JSON response
+        try:
+            # Extract JSON from response (in case there's additional text)
+            json_start = response_text.find('{')
+            json_end = response_text.rfind('}') + 1
+            
+            if json_start != -1 and json_end != -1:
+                json_str = response_text[json_start:json_end]
+                recommendation = json.loads(json_str)
+            else:
+                # If no JSON found, create structured response from text
+                recommendation = {
+                    "recommended_employee": "PARSING_ERROR",
+                    "confidence_score": 0.0,
+                    "reasoning": {
+                        "primary_factors": ["Could not parse structured response"],
+                        "skill_analysis": "Response parsing failed",
+                        "availability_analysis": "Response parsing failed",
+                        "risk_assessment": "Response parsing failed",
+                        "alternative_options": "Response parsing failed"
+                    },
+                    "raw_response": response_text
+                }
+        
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON parsing error: {e}")
+            # Create fallback response
+            recommendation = {
+                "recommended_employee": "PARSING_ERROR",
+                "confidence_score": 0.0,
+                "reasoning": {
+                    "primary_factors": ["JSON parsing failed"],
+                    "skill_analysis": "Could not parse Gemini response",
+                    "availability_analysis": "Could not parse Gemini response", 
+                    "risk_assessment": "Could not parse Gemini response",
+                    "alternative_options": "Could not parse Gemini response"
+                },
+                "raw_response": response_text,
+                "error": str(e)
+            }
         
         return {
-            "status": "success",
-            "code": code,
-            "language": language,
-            "requirements": requirements
+            "success": True,
+            "recommendation": recommendation,
+            "ticket_id": ticket_info.get('id', 'N/A'),
+            "serialized_agent_results": serialized_results  # Include for debugging
+        }
+        
+    except Exception as e:
+        print(f"❌ Error in get_final_employee_recommendation: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "ticket_id": ticket_info.get('id', 'N/A')
         }
 
-class Agent:
-    def __init__(self, name: str, role: str, specialization: str):
-        self.name = name
-        self.role = role
-        self.specialization = specialization
-        self.model = genai.GenerativeModel('gemini-1.5-flash')  # Using Gemini 1.5 Flash
-        self.message_history = []
-        self.tools = {}
-    
-    def add_tool(self, tool: Tool):
-        self.tools[tool.name] = tool
-    
-    def process_message(self, message: Message) -> Optional[Message]:
-        self.message_history.append(message)
-        
-        # Create context for the AI model
-        context = self._build_context(message)
-        
-        try:
-            response = self.model.generate_content(context)
-            response_text = response.text
-            
-            # Parse response for tool usage or collaboration
-            if "TOOL_USE:" in response_text:
-                return self._handle_tool_request(response_text, message.sender)
-            elif "COLLABORATE:" in response_text:
-                return self._handle_collaboration(response_text, message.sender)
-            else:
-                return Message(
-                    sender=self.name,
-                    receiver=message.sender,
-                    message_type=MessageType.RESULT,
-                    content=response_text,
-                    timestamp=time.time()
-                )
-        except Exception as e:
-            return Message(
-                sender=self.name,
-                receiver=message.sender,
-                message_type=MessageType.RESULT,
-                content=f"Error processing message: {str(e)}",
-                timestamp=time.time()
-            )
-    
-    def _build_context(self, message: Message) -> str:
-        context = f"""
-You are {self.name}, a {self.role} specialized in {self.specialization}.
 
-Available tools:
-{', '.join(self.tools.keys())}
+def get_and_return_agents(tkt_name, tkt_id, description, required_skills, suggested_employee, priority, due_date, exist_skills):
+    tkt_obj = TicketAnalyzerAgents()
+    his_obj = HistoryAnalyst()
+    avl_obj =  AvailabilityCheckerAgent()
+    policy_obj = PolicyChecker()
 
-Recent message history:
-{self._format_message_history()}
+    emp_db_path = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\tools\datasets\employee_with_ids.xlsx"
+    leave_db_path = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\tools\datasets\Final_Employees_Leave_Table.xlsx"
+    col_name = "name"
 
-Current message from {message.sender}:
-{message.content}
+    
+    # Build employee profiles
+    employee_profiles = build_employee_profiles(
+        employee_names=suggested_employee,
+        excel_path=emp_db_path,
+        leave_db_path=leave_db_path,
+        name_column=col_name,
+        designation_column="job_title",
+        default_department="Development"
+    )
 
-Instructions:
-1. If you need to use a tool, respond with: TOOL_USE: tool_name {{"param": "value"}}
-2. If you need to collaborate with another agent, respond with: COLLABORATE: agent_name message
-3. Otherwise, provide a direct response to complete the task.
+    print("1️⃣ Running Ticket Analyzer Agent...")
+    agent_1_res = tkt_obj.analyze_with_agent_system(required_skills, description, exist_skills)
+    
+    print("2️⃣ Running History Analyst Agent...")
+    agent_2_res = his_obj.analyze_with_agent_system(tkt_name, description, required_skills, suggested_employee)
+    
+    print("3️⃣ Running Skill Matcher Agent...")
+    normalize_skills(required_skills)
+    agent_3_res = fetch_employee_profiles(suggested_employee, emp_db_path)
 
-Response:
-"""
-        return context
+    print("4️⃣ Running Availability Checker Agent...")
+    agent_4_res = avl_obj.check_with_agent_system(suggested_employee, leave_db_path, emp_db_path)
     
-    def _format_message_history(self) -> str:
-        recent_messages = self.message_history[-5:]  # Last 5 messages
-        formatted = []
-        for msg in recent_messages:
-            formatted.append(f"{msg.sender}: {msg.content}")
-        return "\n".join(formatted)
-    
-    def _handle_tool_request(self, response_text: str, original_sender: str) -> Message:
-        try:
-            # Parse tool request
-            tool_part = response_text.split("TOOL_USE:")[1].strip()
-            parts = tool_part.split(" ", 1)
-            tool_name = parts[0]
-            params = json.loads(parts[1]) if len(parts) > 1 else {}
-            
-            if tool_name in self.tools:
-                result = self.tools[tool_name].execute(params)
-                return Message(
-                    sender=self.name,
-                    receiver=original_sender,
-                    message_type=MessageType.TOOL_RESPONSE,
-                    content=f"Tool {tool_name} executed: {json.dumps(result)}",
-                    timestamp=time.time()
-                )
-        except Exception as e:
-            return Message(
-                sender=self.name,
-                receiver=original_sender,
-                message_type=MessageType.RESULT,
-                content=f"Tool execution failed: {str(e)}",
-                timestamp=time.time()
-            )
-    
-    def _handle_collaboration(self, response_text: str, original_sender: str) -> Message:
-        try:
-            # Parse collaboration request
-            collab_part = response_text.split("COLLABORATE:")[1].strip()
-            parts = collab_part.split(" ", 1)
-            target_agent = parts[0]
-            message_content = parts[1] if len(parts) > 1 else ""
-            
-            return Message(
-                sender=self.name,
-                receiver=target_agent,
-                message_type=MessageType.COLLABORATION,
-                content=message_content,
-                timestamp=time.time()
-            )
-        except Exception as e:
-            return Message(
-                sender=self.name,
-                receiver=original_sender,
-                message_type=MessageType.RESULT,
-                content=f"Collaboration failed: {str(e)}",
-                timestamp=time.time()
-            )
+    print("5️⃣ Running Policy Checker Agent...")
+    agent_5_res = policy_obj.analyze_with_agent_system(tkt_name, tkt_id, description, employee_profiles, emp_db_path, col_name)
 
-class CAMELSystem:
-    def __init__(self):
-        self.agents = {}
-        self.tools = {}
-        self.message_queue = []
-        self.completed_tasks = []
-        
-        # Initialize tools
-        self.tools["web_search"] = WebSearchTool()
-        self.tools["data_analysis"] = DataAnalysisTool()
-        self.tools["code_generation"] = CodeGenerationTool()
-        
-        # Initialize agents
-        self.agents["researcher"] = Agent(
-            "researcher", 
-            "Research Specialist", 
-            "information gathering and analysis"
-        )
-        self.agents["developer"] = Agent(
-            "developer", 
-            "Software Developer", 
-            "coding and technical implementation"
-        )
-        self.agents["analyst"] = Agent(
-            "analyst", 
-            "Data Analyst", 
-            "data processing and insights generation"
-        )
-        
-        # Assign tools to agents
-        self.agents["researcher"].add_tool(self.tools["web_search"])
-        self.agents["developer"].add_tool(self.tools["code_generation"])
-        self.agents["analyst"].add_tool(self.tools["data_analysis"])
-        
-        # Cross-assign some tools for collaboration
-        self.agents["researcher"].add_tool(self.tools["data_analysis"])
-        self.agents["analyst"].add_tool(self.tools["web_search"])
+    agent_results = {
+        "ticket_analyzer": agent_1_res,
+        "history_analyst": agent_2_res,
+        "skill_matcher": agent_3_res,
+        "availability_checker": agent_4_res,
+        "policy_checker": agent_5_res
+    }
     
-    def add_task(self, task_description: str, assigned_agent: str):
-        message = Message(
-            sender="system",
-            receiver=assigned_agent,
-            message_type=MessageType.TASK_ASSIGNMENT,
-            content=task_description,
-            timestamp=time.time()
-        )
-        self.message_queue.append(message)
+    # Compile ticket information
+    ticket_info = {
+        "name": tkt_name,
+        "id": tkt_id,
+        "description": description,
+        "required_skills": required_skills,
+        "suggested_employees": suggested_employee,
+        "priority": priority,
+        "due_date": due_date,
+        "existing_skills": exist_skills
+    }
     
-    def process_messages(self):
-        while self.message_queue:
-            message = self.message_queue.pop(0)
-            
-            if message.receiver in self.agents:
-                agent = self.agents[message.receiver]
-                response = agent.process_message(message)
-                
-                if response:
-                    if response.receiver in self.agents:
-                        self.message_queue.append(response)
-                    else:
-                        # Task completed
-                        self.completed_tasks.append({
-                            "task": message.content,
-                            "result": response.content,
-                            "agent": message.receiver,
-                            "timestamp": response.timestamp
-                        })
-                        print(f"Task completed by {message.receiver}:")
-                        print(f"Result: {response.content}")
-                        print("-" * 50)
-            
-            # Prevent infinite loops
-            if len(self.message_queue) > 100:
-                break
+    print("6️⃣ Getting final recommendation from Gemini...")
+    # Get final recommendation from Gemini
+    final_recommendation = get_final_employee_recommendation(agent_results, ticket_info)
     
-    def run_demo(self):
-        print("🐪 CAMEL AI System Demo")
-        print("=" * 50)
+    # Generate and save HTML report
+    print("📄 Generating HTML report...")
+    html_content = generate_html(final_recommendation, ticket_info)
+    report_filename = save_html_report(html_content)
+    
+    # Print results with better formatting
+    print("\n" + "="*60)
+    print("📋 AGENT ANALYSIS RESULTS:")
+    print("="*60)
+    
+    # Print serialized results for better readability
+    if final_recommendation.get("success") and "serialized_agent_results" in final_recommendation:
+        serialized = final_recommendation["serialized_agent_results"]
+        for i, (agent_name, result) in enumerate(serialized.items(), 1):
+            print(f"{i}. {agent_name.replace('_', ' ').title()}: {str(result)[:100]}...")
+    else:
+        print(f"1. Ticket Analyzer: {str(agent_1_res)[:100]}...")
+        print(f"2. History Analyst: {str(agent_2_res)[:100]}...")
+        print(f"3. Skill Matcher: {str(agent_3_res)[:100]}...")
+        print(f"4. Availability Checker: {str(agent_4_res)[:100]}...")
+        print(f"5. Policy Checker: {str(agent_5_res)[:100]}...")
+    
+    print("\n" + "="*60)
+    print("🎯 FINAL RECOMMENDATION:")
+    print("="*60)
+    
+    if final_recommendation["success"]:
+        recommendation = final_recommendation["recommendation"]
+        print(f"👤 Recommended Employee: {recommendation.get('recommended_employee', 'N/A')}")
+        print(f"📊 Confidence Score: {recommendation.get('confidence_score', 0.0)}")
         
-        # Task 1: Research and Analysis
-        print("\n📝 Task 1: Research latest AI trends")
-        self.add_task(
-            "Research the latest trends in artificial intelligence for 2024-2025. Focus on multi-agent systems and their applications.",
-            "researcher"
-        )
+        if 'reasoning' in recommendation:
+            reasoning = recommendation['reasoning']
+            print(f"💡 Primary Factors: {reasoning.get('primary_factors', [])}")
+            print(f"🔧 Skill Analysis: {reasoning.get('skill_analysis', 'N/A')}")
+            print(f"📅 Availability Analysis: {reasoning.get('availability_analysis', 'N/A')}")
+            print(f"⚠️  Risk Assessment: {reasoning.get('risk_assessment', 'N/A')}")
         
-        # Task 2: Data Analysis
-        print("\n📊 Task 2: Analyze sample data")
-        self.add_task(
-            "Analyze the following sample data for trends: [100, 120, 135, 150, 180, 200, 220]. Generate insights and recommendations.",
-            "analyst"
-        )
-        
-        # Task 3: Code Generation
-        print("\n💻 Task 3: Generate Python code")
-        self.add_task(
-            "Generate Python code for a simple multi-agent communication system with message passing capabilities.",
-            "developer"
-        )
-        
-        # Process all tasks
-        self.process_messages()
-        
-        # Display summary
-        print("\n📋 Summary of Completed Tasks:")
-        print("=" * 50)
-        for i, task in enumerate(self.completed_tasks, 1):
-            print(f"Task {i}: {task['task'][:50]}...")
-            print(f"Agent: {task['agent']}")
-            print(f"Status: Completed")
-            print("-" * 30)
-        
-        return self.completed_tasks
+        if 'assignment_recommendations' in recommendation:
+            assign_rec = recommendation['assignment_recommendations']
+            print(f"⏱️  Estimated Completion: {assign_rec.get('estimated_completion_time', 'N/A')}")
+            print(f"✅ Success Probability: {assign_rec.get('success_probability', 0.0)}")
+    else:
+        print(f"❌ Error: {final_recommendation.get('error', 'Unknown error')}")
+    
+    if report_filename:
+        print(f"\n📄 HTML Report saved: {report_filename}")
+    
+    return final_recommendation
 
-# Usage example
+
+def main(input_json):
+    tkt_name = input_json.get("ticket_name", None)
+    tkt_id = input_json.get("ticket_id", None)
+    description = input_json.get("description", None)
+    required_skills = input_json.get("required_skills", None)
+    suggested_employee = input_json.get("suggested_employee", None)
+    priority = input_json.get("priority", None)
+    due_date = input_json.get("due_date", None)
+    existing_skills = input_json.get("existing_skills", None)
+    
+    final_recommendation = get_and_return_agents(tkt_name, tkt_id, description, required_skills, suggested_employee, priority, due_date, existing_skills)
+    return final_recommendation  # Return the actual recommendation instead of just "completed"
+
+
 if __name__ == "__main__":
-    # Check if API key is available
-    if not api_key:
-        print("Please set your GEMINI_API_KEY in your .env file")
-        print("Create a .env file with: GEMINI_API_KEY=your_api_key_here")
-        exit(1)
+    # Example usage with sample data
+    sample_input = {
+        "ticket_name": "Sample Ticket",
+        "ticket_id": "TKT-001",
+        "description": "Sample ticket description",
+        "required_skills": ["Python", "Machine Learning"],
+        "suggested_employee": ["John Doe", "Jane Smith"],
+        "priority": "High",
+        "due_date": "2025-07-25",
+        "existing_skills": ["Python", "Data Analysis"]
+    }
     
-    # Create and run the CAMEL system
-    camel_system = CAMELSystem()
-    results = camel_system.run_demo()
-    
-    print(f"\n✅ Demo completed! {len(results)} tasks processed.")
+    result = main(sample_input)
+    print(f"\n🎉 Analysis completed! Result: {result.get('success', False)}")

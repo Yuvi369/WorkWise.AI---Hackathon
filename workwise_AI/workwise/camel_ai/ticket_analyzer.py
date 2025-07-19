@@ -1,195 +1,136 @@
 import os
 import json
-import re
-from typing import Dict, List, Any
-from base_agent import BaseAgent, Tool, TicketData, MessageType
-import google.generativeai as genai
+import time
+from base_agent import BaseAgent, Message, MessageType, Tool
+from tools_camel.enrich_skill_tool import enrich_skills_with_llm
+from tools_camel.normalize_skills_tools import normalize_skills
 
-class NormalizeSkillsTool(Tool):
+# Create tool wrappers for the agent
+class SkillNormalizationTool(Tool):
     def __init__(self):
-        super().__init__("normalize_skills", "Normalize and standardize skill names")
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        super().__init__("normalize_skills", "Normalizes and standardizes skill names")
     
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, params):
         skills = params.get("skills", [])
-        
-        # Skill normalization mapping
-        skill_mapping = {
-            "js": "javascript",
-            "py": "python",
-            "react.js": "react",
-            "node.js": "nodejs",
-            "html5": "html",
-            "css3": "css",
-            "sql server": "sql",
-            "mysql": "sql",
-            "postgresql": "sql",
-            "mongodb": "nosql",
-            "aws": "cloud",
-            "azure": "cloud",
-            "gcp": "cloud",
-            "docker": "containerization",
-            "kubernetes": "orchestration",
-            "jenkins": "ci/cd",
-            "git": "version_control",
-            "github": "version_control",
-            "gitlab": "version_control"
-        }
-        
-        normalized_skills = []
-        for skill in skills:
-            skill_lower = skill.lower().strip()
-            normalized_skill = skill_mapping.get(skill_lower, skill_lower)
-            if normalized_skill not in normalized_skills:
-                normalized_skills.append(normalized_skill)
-        
-        return {
-            "status": "success",
-            "original_skills": skills,
-            "normalized_skills": normalized_skills,
-            "mappings_applied": len([s for s in skills if s.lower() in skill_mapping])
-        }
+        return normalize_skills(skills)
 
-class EnrichSkillsWithLLMTool(Tool):
+class SkillEnrichmentTool(Tool):
     def __init__(self):
-        super().__init__("enrich_skills_with_llm", "Enrich skills using LLM analysis")
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        super().__init__("enrich_skills_with_llm", "Enriches skills using LLM analysis of description")
     
-    def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        ticket_description = params.get("ticket_description", "")
-        existing_skills = params.get("existing_skills", [])
-        
-        prompt = f"""
-        Analyze this ticket description and identify required technical skills:
-        
-        Ticket Description: {ticket_description}
-        
-        Existing identified skills: {existing_skills}
-        
-        Please identify:
-        1. Additional technical skills needed
-        2. Skill level required (1-5, where 5 is expert)
-        3. Priority of each skill for this ticket
-        
-        Return response in JSON format:
-        {{
-            "additional_skills": ["skill1", "skill2"],
-            "skill_levels": {{"skill": level}},
-            "skill_priorities": {{"skill": priority}}
-        }}
-        """
-        
-        try:
-            response = self.model.generate_content(prompt)
-            # Parse JSON from response
-            response_text = response.text
-            # Extract JSON from response
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            if json_match:
-                enriched_data = json.loads(json_match.group())
-            else:
-                enriched_data = {"additional_skills": [], "skill_levels": {}, "skill_priorities": {}}
-            
-            return {
-                "status": "success",
-                "enriched_skills": enriched_data,
-                "total_skills": len(existing_skills) + len(enriched_data.get("additional_skills", [])),
-                "llm_analysis": response_text
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e),
-                "enriched_skills": {"additional_skills": [], "skill_levels": {}, "skill_priorities": {}}
-            }
+    def execute(self, params):
+        description = params.get("description", "")
+        existing_skills = params.get("existing_skills", "")
+        return enrich_skills_with_llm(description, existing_skills)
 
-class TicketAnalyzer(BaseAgent):
+class TicketAnalyzerAgents(BaseAgent):
     def __init__(self):
         super().__init__(
             name="ticket_analyzer",
-            role="Ticket Analysis Specialist",
-            specialization="analyzing tickets and extracting required skills"
+            role="Ticket Understanding & Skill Extraction",
+            specialization="""You are a seasoned product analyst who has worked across hundreds of agile teams.
+            You are great at understanding vague or incomplete ticket descriptions and extracting the relevant skills required."""
         )
         
-        # Add tools
-        self.add_tool(NormalizeSkillsTool())
-        self.add_tool(EnrichSkillsWithLLMTool())
-    
-    def analyze_ticket(self, ticket_data: TicketData) -> Dict[str, Any]:
-        """Main method to analyze a ticket and extract skills"""
-        
-        # Step 1: Normalize existing skills
-        normalize_result = self.tools["normalize_skills"].execute({
-            "skills": ticket_data.required_skills
-        })
-        
-        # Step 2: Enrich skills with LLM
-        enrich_result = self.tools["enrich_skills_with_llm"].execute({
-            "ticket_description": ticket_data.description,
-            "existing_skills": normalize_result["normalized_skills"]
-        })
-        
-        # Combine results
-        all_skills = normalize_result["normalized_skills"] + enrich_result["enriched_skills"]["additional_skills"]
-        
-        analysis_result = {
-            "ticket_id": ticket_data.ticket_id,
-            "title": ticket_data.title,
-            "priority": ticket_data.priority,
-            "category": ticket_data.category,
-            "required_skills": list(set(all_skills)),  # Remove duplicates
-            "skill_levels": enrich_result["enriched_skills"].get("skill_levels", {}),
-            "skill_priorities": enrich_result["enriched_skills"].get("skill_priorities", {}),
-            "estimated_hours": ticket_data.estimated_hours,
-            "deadline": ticket_data.deadline,
-            "complexity_score": self._calculate_complexity(ticket_data, all_skills),
-            "analysis_metadata": {
-                "normalized_skills": normalize_result["normalized_skills"],
-                "enriched_skills": enrich_result["enriched_skills"]["additional_skills"],
-                "normalization_mappings": normalize_result["mappings_applied"]
-            }
-        }
-        
-        return analysis_result
-    
-    def _calculate_complexity(self, ticket_data: TicketData, skills: List[str]) -> int:
-        """Calculate ticket complexity score (1-10)"""
-        complexity = 1
-        
-        # Priority factor
-        priority_scores = {"low": 1, "medium": 2, "high": 3, "urgent": 4}
-        complexity += priority_scores.get(ticket_data.priority.lower(), 1)
-        
-        # Skills count factor
-        complexity += min(len(skills), 3)  # Max 3 points for skills
-        
-        # Estimated hours factor
-        if ticket_data.estimated_hours > 40:
-            complexity += 3
-        elif ticket_data.estimated_hours > 20:
-            complexity += 2
-        elif ticket_data.estimated_hours > 10:
-            complexity += 1
-        
-        return min(complexity, 10)  # Cap at 10
+        print("*****^^^^^^####### Ticket Analyzer agent execution started *****^^^^^^#######")
+        # Register tools with the agent
+        self.add_tool(SkillNormalizationTool())
+        self.add_tool(SkillEnrichmentTool())
 
-# Example usage
+    def analyze_employee_for_ticket(self, input_skills: list, description: str, existing_skills: str) -> dict:
+        """Direct analysis method for ticket skill extraction"""
+        try:
+            # Normalize skills using the tool
+            normalized = normalize_skills(input_skills)
+            
+            # Enrich skills using the tool
+            enriched = enrich_skills_with_llm(description, existing_skills)
+            
+            return {
+                "normalized_skills": normalized,
+                "enriched_skills": enriched
+            }
+            
+        except Exception as e:
+            return {
+                "error": str(e),
+                "normalized_skills": None,
+                "enriched_skills": None
+            }
+
+    def analyze_with_agent_system(self, input_skills: list, description: str, existing_skills: str):
+        """Uses the agent's messaging system with tool prompting"""
+        
+        # Create a task message with tool usage instructions
+        task_content = f"""
+        Please analyze this ticket for skill extraction and normalization:
+        
+        Input Skills: {input_skills}
+        Ticket Description: {description}
+        Existing Skills: {existing_skills}
+
+        Please follow these steps:
+        1. Use the normalize_skills tool with the "Input Skills" to standardize the skill names
+        2. Use the enrich_skills_with_llm tool with the "Ticket Description" and "Existing Skills" to identify additional relevant skills
+        
+        Provide a comprehensive analysis of the required skills for this ticket.
+        """
+        
+        message = Message(
+            sender="system",
+            receiver=self.name,
+            message_type=MessageType.TASK_ASSIGNMENT,
+            content=task_content,
+            timestamp=time.time()
+        )
+        
+        # Process the message through agent system
+        response = self.process_message(message)
+        print("*****^^^^^^####### Ticket Analyzer agent execution Completed *****^^^^^^#######")
+        return response
+
 if __name__ == "__main__":
-    # Test the Ticket Analyzer
-    analyzer = TicketAnalyzer()
+    print("🚀 Starting TicketAnalyzerAgents Test")
+    print("=" * 60)
     
-    # Sample ticket data
-    ticket = TicketData(
-        ticket_id="TICK-001",
-        title="Build React Dashboard with API Integration",
-        description="Create a responsive dashboard using React.js with REST API integration. Need to display real-time data charts and implement user authentication. Backend should use Node.js with MongoDB.",
-        priority="high",
-        required_skills=["react.js", "nodejs", "mongodb"],
-        estimated_hours=35,
-        deadline="2024-12-31",
-        category="frontend"
-    )
-    
-    result = analyzer.analyze_ticket(ticket)
-    print("🎯 Ticket Analysis Result:")
-    print(json.dumps(result, indent=2))
+    try:
+        agent = TicketAnalyzerAgents()
+        print("✅ TicketAnalyzerAgents created successfully")
+        print(f"🔧 Available tools: {list(agent.tools.keys())}")
+        
+        # Test data
+        test_input = ["  py", "JS", "lightning web components", "css3", "Vue"]
+        description = "Fix button layout issues and apply responsive design in LWC component."
+        existing_skills = "LWC, CSS"
+        
+        print("\n" + "=" * 60)
+        print("🧪 METHOD 1: Direct Analysis (Tool Execution)")
+        print("=" * 60)
+        
+        result1 = agent.analyze_employee_for_ticket(test_input, description, existing_skills)
+        print(":dart: Ticket Analysis Result:")
+        print(json.dumps(result1, indent=2))
+        
+        print("\n" + "=" * 60)
+        print("🧪 METHOD 2: Agent System Analysis (With Prompting)")
+        print("=" * 60)
+        
+        result2 = agent.analyze_with_agent_system(test_input, description, existing_skills)
+        
+        if result2:
+            print("🤖 Agent Response:")
+            print(f"📤 From: {result2.sender}")
+            print(f"📥 To: {result2.receiver}")
+            print(f"📋 Type: {result2.message_type}")
+            print(f"💬 Content: {result2.content}")
+        else:
+            print("❌ No response from agent")
+        
+        print("\n" + "=" * 60)
+        print("🏁 TEST COMPLETE")
+        print("=" * 60)
+        
+    except Exception as e:
+        print(f"💥 MAIN ERROR: {e}")
+        import traceback
+        traceback.print_exc()
