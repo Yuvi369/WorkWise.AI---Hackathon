@@ -207,7 +207,7 @@ class AvailabilityCheckerAgent(BaseAgent):
         - leave_db: "{safe_leave_db}"
         - emp_db: "{safe_emp_db}"
 
-        Check each employee's current availability status and generate a comprehensive report.
+        Check each employee's current availability status.
         """
         
         message = Message(

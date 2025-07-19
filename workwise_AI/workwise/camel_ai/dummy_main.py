@@ -4,8 +4,13 @@ import google.generativeai as genai
 from typing import Dict, List, Any, Optional
 from dotenv import load_dotenv
 
+from chat_gemini.classify_prompt import chat_main
+import os
+import base64
+from pathlib import Path
+
 # Import the HTML report generator
-from tools_camel.summary_report import generate_html, save_html_report
+from tools_camel.summary_report import generate_html,save_html_report_fixed_location, save_html_report
 from tools_camel.dummy_tool import build_employee_profiles
 
 load_dotenv()
@@ -255,6 +260,7 @@ def get_and_return_agents(tkt_name, tkt_id, description, required_skills, sugges
     agent_1_res = tkt_obj.analyze_with_agent_system(required_skills, description, exist_skills)
     
     print("2️⃣ Running History Analyst Agent...")
+    rep_agent_1 = his_obj.analyze_employee_for_ticket(tkt_name, description, required_skills, suggested_employee)
     agent_2_res = his_obj.analyze_with_agent_system(tkt_name, description, required_skills, suggested_employee)
     
     print("3️⃣ Running Skill Matcher Agent...")
@@ -265,7 +271,9 @@ def get_and_return_agents(tkt_name, tkt_id, description, required_skills, sugges
     agent_4_res = avl_obj.check_with_agent_system(suggested_employee, leave_db_path, emp_db_path)
     
     print("5️⃣ Running Policy Checker Agent...")
+    # rep_agent_2 = policy_obj.analyze_hr_policy(tkt_name, tkt_id, description, employee_profiles, emp_db_path, col_name) 
     agent_5_res = policy_obj.analyze_with_agent_system(tkt_name, tkt_id, description, employee_profiles, emp_db_path, col_name)
+    rep_agent_2 = policy_obj.analyze_hr_policy(tkt_name, tkt_id, description, employee_profiles, emp_db_path, col_name)
 
     agent_results = {
         "ticket_analyzer": agent_1_res,
@@ -293,8 +301,9 @@ def get_and_return_agents(tkt_name, tkt_id, description, required_skills, sugges
     
     # Generate and save HTML report
     print("📄 Generating HTML report...")
+    print("📄 Generating HTML report...")
     html_content = generate_html(final_recommendation, ticket_info)
-    report_filename = save_html_report(html_content)
+    report_path = save_html_report_fixed_location(html_content)
     
     # Print results with better formatting
     print("\n" + "="*60)
@@ -336,24 +345,154 @@ def get_and_return_agents(tkt_name, tkt_id, description, required_skills, sugges
     else:
         print(f"❌ Error: {final_recommendation.get('error', 'Unknown error')}")
     
-    if report_filename:
-        print(f"\n📄 HTML Report saved: {report_filename}")
+    if report_path:
+        print(f"\n📄 HTML Report saved: {report_path}")
     
     return final_recommendation
 
-
-def main(input_json):
-    tkt_name = input_json.get("ticket_name", None)
-    tkt_id = input_json.get("ticket_id", None)
-    description = input_json.get("description", None)
-    required_skills = input_json.get("required_skills", None)
-    suggested_employee = input_json.get("suggested_employee", None)
-    priority = input_json.get("priority", None)
-    due_date = input_json.get("due_date", None)
-    existing_skills = input_json.get("existing_skills", None)
+def encode_html_to_base64(file_path: str) -> str:
+    """
+    Read HTML file and encode it to base64
     
-    final_recommendation = get_and_return_agents(tkt_name, tkt_id, description, required_skills, suggested_employee, priority, due_date, existing_skills)
-    return final_recommendation  # Return the actual recommendation instead of just "completed"
+    Args:
+        file_path: Path to the HTML file
+        
+    Returns:
+        Base64 encoded string of the HTML content
+    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+        
+        # Encode to base64
+        encoded_bytes = base64.b64encode(html_content.encode('utf-8'))
+        return encoded_bytes.decode('utf-8')
+    except Exception as e:
+        print(f"Error encoding {file_path} to base64: {e}")
+        return None
+
+def get_html_reports_as_base64(reports_folder: str) -> dict:
+    """
+    Get all HTML reports from the folder and return as base64 encoded strings
+    
+    Args:
+        reports_folder: Path to the reports folder
+        
+    Returns:
+        Dictionary with report names as keys and base64 encoded HTML as values
+    """
+    reports_folder = Path(reports_folder)
+    
+    # Define the expected report files
+    report_files = {
+        "policy_report": "policy_agent_report.html",
+        "history_report": "history_report.html", 
+        "availability_report": "availability_agent_report.html",
+        "scorer_report": "scorer_agent_report.html",
+        "summary_report": "summary_report.html"
+    }
+    
+    base64_reports = {}
+    
+    for report_key, filename in report_files.items():
+        file_path = reports_folder / filename
+        
+        if file_path.exists():
+            encoded_content = encode_html_to_base64(str(file_path))
+            if encoded_content:
+                base64_reports[report_key] = encoded_content
+            else:
+                base64_reports[report_key] = None
+                print(f"Warning: Could not encode {filename}")
+        else:
+            base64_reports[report_key] = None
+            print(f"Warning: {filename} not found in {reports_folder}")
+    
+    return base64_reports
+
+# def main(input_json):
+#     tkt_name = input_json.get("ticket_name", None)
+#     tkt_id = input_json.get("ticket_id", None)
+#     description = input_json.get("description", None)
+#     required_skills = input_json.get("required_skills", None)
+#     suggested_employee = input_json.get("suggested_employee", None)
+#     priority = input_json.get("priority", None)
+#     due_date = input_json.get("due_date", None)
+#     existing_skills = input_json.get("existing_skills", None)
+    
+#     final_recommendation = get_and_return_agents(tkt_name, tkt_id, description, required_skills, suggested_employee, priority, due_date, existing_skills)
+#     return final_recommendation  # Return the actual recommendation instead of just "completed"
+
+
+def main_alternative(input_json):
+
+    if "llm_input" in input_json:
+        value = input_json.get("llm_input")
+        chat_main(value)
+
+        with open("ex_json.json", "r") as f:
+            data = json.load(f)
+
+        tkt_name_llm = data.get("ticket_number")
+        description_llm = data.get("description")
+        suggested_employee_llm = data.get("assignee")
+        priority_llm = data.get("priority")
+        status__llm = data.get("status")
+        required_skills_llm = data.get("skill_set")
+
+        # Get the recommendation from your existing function
+        final_recommendation = get_and_return_agents(tkt_name_llm, tkt_id, description_llm, required_skills_llm, suggested_employee_llm, priority_llm, due_date, existing_skills)
+        
+        # Path to your reports folder
+        reports_folder = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\camel_ai\tools_camel\reports_exec"
+        
+        # Get all HTML reports as base64
+        html_reports_base64 = get_html_reports_as_base64(reports_folder)
+        
+        # Create the final response with reports at top level
+        response = {
+            "status": "success",
+            "recommendation": final_recommendation,
+            "policy_report": html_reports_base64.get("policy_report"),
+            "history_report": html_reports_base64.get("history_report"),
+            "availability_report": html_reports_base64.get("availability_report"),
+            "scorer_report": html_reports_base64.get("scorer_report"),
+            "summary_report": html_reports_base64.get("summary_report")
+        }
+        
+        return response
+
+    else:
+        tkt_name = input_json.get("ticket_name", None)
+        tkt_id = input_json.get("ticket_id", None)
+        description = input_json.get("description", None)
+        required_skills = input_json.get("required_skills", None)
+        suggested_employee = input_json.get("suggested_employee", None)
+        priority = input_json.get("priority", None)
+        due_date = input_json.get("due_date", None)
+        existing_skills = input_json.get("existing_skills", None)
+        
+        # Get the recommendation from your existing function
+        final_recommendation = get_and_return_agents(tkt_name, tkt_id, description, required_skills, suggested_employee, priority, due_date, existing_skills)
+        
+        # Path to your reports folder
+        reports_folder = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\camel_ai\tools_camel\reports_exec"
+        
+        # Get all HTML reports as base64
+        html_reports_base64 = get_html_reports_as_base64(reports_folder)
+        
+        # Create the final response with reports at top level
+        response = {
+            "status": "success",
+            "recommendation": final_recommendation,
+            "policy_report": html_reports_base64.get("policy_report"),
+            "history_report": html_reports_base64.get("history_report"),
+            "availability_report": html_reports_base64.get("availability_report"),
+            "scorer_report": html_reports_base64.get("scorer_report"),
+            "summary_report": html_reports_base64.get("summary_report")
+        }
+        
+        return response
 
 
 if __name__ == "__main__":
@@ -369,5 +508,5 @@ if __name__ == "__main__":
         "existing_skills": ["Python", "Data Analysis"]
     }
     
-    result = main(sample_input)
+    result = main_alternative(sample_input)
     print(f"\n🎉 Analysis completed! Result: {result.get('success', False)}")

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Assignment Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+            background-color: #f8f9ff;
+            border-radius: 0 8px 8px 0;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 1.5em;
+        }
+        .ticket-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-card h3 {
+            margin-top: 0;
+            color: #555;
+            font-size: 1.1em;
+        }
+        .recommendation-box {
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            color: white;
+        }
+        .recommendation-box.error {
+            background: linear-gradient(135deg, #ff8a80 0%, #ff5722 100%);
+        }
+        .confidence-score {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .employee-name {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .analysis-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        .analysis-card h4 {
+            margin-top: 0;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .skills-list, .factors-list {
+            list-style: none;
+            padding: 0;
+        }
+        .skills-list li, .factors-list li {
+            background: #f0f4ff;
+            margin: 5px 0;
+            padding: 8px 12px;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+        .status-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .json-view {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid #e0e0e0;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Employee Assignment Report</h1>
+            <p>Generated on 2025-07-19 14:58:46</p>
+        </div>
+        
+        <div class="content">
+            <!-- Ticket Information Section -->
+            <div class="section">
+                <h2>Ticket Information</h2>
+                <div class="ticket-info">
+                    <div class="info-card">
+                        <h3>Ticket Details</h3>
+                        <p><strong>Name:</strong> Setup staging environment</p>
+                        <p><strong>ID:</strong> FS-289</p>
+                        <p><strong>Priority:</strong> High</p>
+                        <p><strong>Due Date:</strong> 2025-07-09</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Description</h3>
+                        <p>Setup staging environment in full stack project</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Required Skills</h3>
+                        <ul class="skills-list">
+                            <li>JavaScript</li><li> React js</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h3>Suggested Employees</h3>
+                        <ul class="skills-list">
+                            <li>Mark Jenkins</li><li> Kenneth Simson</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recommendation Section -->
+            <div class="section">
+                <h2>Final Recommendation</h2>
+                
+                <div class="recommendation-box">
+                    <p class='status-success'>Analysis Successful</p>
+                    <div class="employee-name">Recommended: NONE</div>
+                    <div class="confidence-score">1.0</div>
+                    <p>Confidence Score</p>
+                </div>
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h4>Primary Factors</h4>
+                        <ul class="factors-list">
+                            <li>Insufficient data on employee availability and skills for 'Kenneth Simson', and 'Mark Jenkins' lacks crucial skills.</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Skill Analysis</h4>
+                        <p>The History Analyst Agent shows Mark Jenkins possesses JavaScript but lacks React js, a crucial skill for this 'full stack' project.  We lack sufficient information on Kenneth Simson's skills.</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Availability Analysis</h4>
+                        <p>The Availability Checker and Policy Checker agents both returned errors due to exceeding quotas, preventing an assessment of employee availability and workload.</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Risk Assessment</h4>
+                        <p>The lack of complete data on both suggested employees creates significant risk. Assigning the ticket without sufficient information about their availability and complete skill sets could lead to project delays and failure.</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Alternative Options</h4>
+                        <p>Further investigation is needed to determine if other employees possess the required skills (JavaScript and React js). The Availability and Policy checkers must be addressed before a proper assignment can be made.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>Assignment Recommendations</h2>
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h4>Estimated Completion</h4>
+                        <p>N/A</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Success Probability</h4>
+                        <p>N/A</p>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Monitoring Points</h4>
+                        <ul class="factors-list">
+                            <li>N/A</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="analysis-card">
+                        <h4>Support Needed</h4>
+                        <ul class="factors-list">
+                            <li>Resolve quota issues with Availability and Policy checkers.</li><li>Obtain complete skill profiles for all potential candidates.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Raw Data Section -->
+            <div class="section">
+                <h2>Raw Analysis Data</h2>
+                <div class="json-view">{
+  "success": true,
+  "recommendation": {
+    "recommended_employee": "NONE",
+    "confidence_score": 1.0,
+    "reasoning": {
+      "primary_factors": [
+        "Insufficient data on employee availability and skills for 'Kenneth Simson', and 'Mark Jenkins' lacks crucial skills."
+      ],
+      "skill_analysis": "The History Analyst Agent shows Mark Jenkins possesses JavaScript but lacks React js, a crucial skill for this 'full stack' project.  We lack sufficient information on Kenneth Simson's skills.",
+      "availability_analysis": "The Availability Checker and Policy Checker agents both returned errors due to exceeding quotas, preventing an assessment of employee availability and workload.",
+      "risk_assessment": "The lack of complete data on both suggested employees creates significant risk. Assigning the ticket without sufficient information about their availability and complete skill sets could lead to project delays and failure.",
+      "alternative_options": "Further investigation is needed to determine if other employees possess the required skills (JavaScript and React js). The Availability and Policy checkers must be addressed before a proper assignment can be made."
+    },
+    "assignment_recommendations": {
+      "estimated_completion_time": "N/A",
+      "success_probability": "N/A",
+      "monitoring_points": [
+        "N/A"
+      ],
+      "support_needed": [
+        "Resolve quota issues with Availability and Policy checkers.",
+        "Obtain complete skill profiles for all potential candidates."
+      ]
+    }
+  },
+  "ticket_id": "FS-289",
+  "serialized_agent_results": {
+    "ticket_analyzer": {
+      "sender": "ticket_analyzer",
+      "receiver": "system",
+      "message_type": "MessageType.TOOL_RESPONSE",
+      "content": "Tool normalize_skills executed: [\"JavaScript\", \"React Js\"]",
+      "timestamp": 1752917296.1895204,
+      "metadata": null
+    },
+    "history_analyst": {
+      "sender": "history_analyzer",
+      "receiver": "system",
+      "message_type": "MessageType.TOOL_RESPONSE",
+      "content": "Tool get_employee_history executed: [{\"employee_name\": \"Mark Jenkins\", \"skills_extracted\": [\"Shell Scripting\", \"AWS S3\", \"Firebase Cloud Messaging\", \"Elasticsearch\", \"JavaScript\", \"Responsive Design\", \"CSS\", \"Cross-browser Compatibility Testing\", \"Email Debugging\", \"Background Job Queues\", \"REST API\", \"JSON\", \"Search Algorithms\", \"Database Administration\", \"Backend Development\", \"Frontend Development\", \"UI/UX Design\", \"Problem-solving\", \"Debugging\", \"Transaction Idempotency\"], \"ticket_count\": 11, \"tickets_processed\": [{\"ticket_name\": \"Database Backup Automation\", \"description\": \" Set up automated daily backups for the production\\n database to an S3 bucket.\", \"comments\": \"Successfully implemented automated daily database backups to an S3 bucket. This involved AWS S3 configuration, shell scripting for cron jobs, and database administration for backup commands. Also set up monitoring for backup job completion.\"}, {\"ticket_name\": \"Feature\", \"description\": \"Push Notifications\", \"comments\": \"Successfully integrated push notification capabilities. This involved configuring notification services (e.g., Firebase Cloud Messaging), backend development for sending notifications, and frontend implementation for receiving them.\"}, {\"ticket_name\": \"Feature\", \"description\": \"In-App Search\", \"comments\": \"Implemented the in-app search functionality. Utilized search indexing techniques (e.g., Elasticsearch, custom indexing), developed search algorithms, and designed the search UI/UX.\"}, {\"ticket_name\": \"Homepage Carousel Issue\", \"description\": \"The main image carousel on the \\nhomepage is not auto-advancing \\non mobile devices.\", \"comments\": \"\\\"Fixed the homepage carousel issue on mobile. This involved responsive design adjustments, JavaScript debugging for carousel libraries, and cross-browser compatibility testing.\"}, {\"ticket_name\": \"CSS Glitch on Firefox\", \"description\": \"The hero section on the homepage\\n has misaligned text and overlapping\\n elements when viewed in Firefox.\", \"comments\": \"Fixed the CSS glitch on Firefox. Addressed browser-specific CSS rendering differences, applied vendor prefixes where necessary, and performed cross-browser CSS debugging.\"}, {\"ticket_name\": \"Duplicate Order Confirmation Emails\", \"description\": \"Some customers are receiving \\ntwo identical order confirmation\\n emails after placing a \\nsuccessful order.\", \"comments\": \"Fixed duplicate order confirmation emails. Debugged email sending triggers, implemented transactional idempotency checks, and reviewed background job queues.\"}, {\"ticket_name\": \"Newsletter Subscription Popup\", \"description\": \"Implement a non-intrusive popup \\nfor newsletter subscriptions, \\nappearing after 30 seconds \\non the homepage.\\n\\n\", \"comments\": NaN}, {\"ticket_name\": \"Testimonial Submission Form\", \"description\": \"Develop a frontend form for \\nusers to submit testimonials, with \\nmoderation capabilities\\n in the backend.\", \"comments\": NaN}, {\"ticket_name\": \"Update Copyright Year in Footer\", \"description\": \"Change the copyright year in the\\n website footer from \\\"2024\\\" to \\\"2025.\\\"\", \"comments\": NaN}, {\"ticket_name\": \"Implement Canonical Tags\", \"description\": \"Add canonical tags to all product \\npages to prevent duplicate \\ncontent issues.\", \"comments\": NaN}, {\"ticket_name\": \"API Endpoint Development \\n(New Product Feed)\", \"description\": \"Develop a new REST API endpoint\\n to serve a list of products in JSON\\n format for external partners.\", \"comments\": NaN}], \"score\": 50, \"matching_skills\": [\"JavaScript\"], \"missing_skills\": [\"React js\"], \"reasoning\": \"Employee possesses JavaScript, one of the two required skills.  Missing React js.\", \"recommendation\": \"Partial Match\"}]",
+      "timestamp": 1752917306.5260942,
+      "metadata": null
+    },
+    "skill_matcher": {
+      "employees": [
+        "Mark Jenkins",
+        " Kenneth Simson"
+      ],
+      "profiles": "fetched"
+    },
+    "availability_checker": {
+      "sender": "availability_checker",
+      "receiver": "system",
+      "message_type": "MessageType.RESULT",
+      "content": "Error processing message: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {\n  quota_metric: \"generativelanguage.googleapis.com/generate_content_free_tier_requests\"\n  quota_id: \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\"\n  quota_dimensions {\n    key: \"model\"\n    value: \"gemini-1.5-flash\"\n  }\n  quota_dimensions {\n    key: \"location\"\n    value: \"global\"\n  }\n  quota_value: 50\n}\n, links {\n  description: \"Learn more about Gemini API quotas\"\n  url: \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n}\n, retry_delay {\n  seconds: 33\n}\n]",
+      "timestamp": 1752917306.9529023,
+      "metadata": null
+    },
+    "policy_checker": {
+      "sender": "policy_checker",
+      "receiver": "system",
+      "message_type": "MessageType.RESULT",
+      "content": "Error processing message: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {\n  quota_metric: \"generativelanguage.googleapis.com/generate_content_free_tier_requests\"\n  quota_id: \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\"\n  quota_dimensions {\n    key: \"model\"\n    value: \"gemini-1.5-flash\"\n  }\n  quota_dimensions {\n    key: \"location\"\n    value: \"global\"\n  }\n  quota_value: 50\n}\n, links {\n  description: \"Learn more about Gemini API quotas\"\n  url: \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n}\n, retry_delay {\n  seconds: 31\n}\n]",
+      "timestamp": 1752917308.1802664,
+      "metadata": null
+    }
+  }
+}</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated by WorkWise AI Employee Assignment System</p>
+            <p>Report ID: FS-289 | Timestamp: 2025-07-19 14:58:46</p>
+        </div>
+    </div>
+</body>
+</html>

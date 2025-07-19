@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from dummy_main import main
+from dummy_main import main_alternative
 
 app = Flask(__name__)
 
@@ -13,7 +13,7 @@ def process_data():
             return jsonify({"error": "No JSON payload received"}), 400
         
         print("✅ Received JSON:")
-        final_recommendation = main(data)
+        final_recommendation = main_alternative(data)
         print(data)
         
         # Return the recommendation from the agents

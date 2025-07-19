@@ -98,6 +98,10 @@ class HistoryAnalyst(BaseAgent):
         call calculate_similarity tool with "Ticket","Description" with "Required Skills"- it calculates the score employee previous ticket history's and the current ticket. 
         
         Use the get_employee_history and calculate_similarity tools to provide a comprehensive analysis.
+        get_employee_history has "generate_html_report" execute this function properly from tools_camel.history_report import generate_html_report.
+        calculate_similarity has "generate_html_report" execute this function properly from tools_camel.similarity_report import generate_html_report.
+
+        Dont execute report by yourself.
         """
         
         message = Message(

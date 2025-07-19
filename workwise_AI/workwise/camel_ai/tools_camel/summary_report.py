@@ -1,5 +1,7 @@
 import json
+import os
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, Any
 
 def generate_html(final_recommendation: Dict[str, Any], ticket_info: Dict[str, Any]) -> str:
@@ -338,26 +340,63 @@ def generate_html(final_recommendation: Dict[str, Any], ticket_info: Dict[str, A
     
     return html_content
 
-def save_html_report(html_content: str, filename: str = None) -> str:
+def save_html_report(html_content: str, filename: str = None, custom_path: str = None) -> str:
     """
     Save HTML content to file
     
     Args:
         html_content: HTML string to save
         filename: Optional filename, if not provided, generates timestamp-based name
+        custom_path: Optional custom directory path to save the file
         
     Returns:
-        Filename of saved report
+        Full path of saved report
     """
+    # Set the default path to your desired location
+    if custom_path is None:
+        custom_path = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\camel_ai\tools_camel\reports_exec"
+    
+    # Create directory if it doesn't exist
+    Path(custom_path).mkdir(parents=True, exist_ok=True)
+    
+    # Generate filename if not provided
     if not filename:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"employee_assignment_report_{timestamp}.html"
+        filename = "summary_report.html"  # Use your desired filename
+    
+    # Create full file path
+    full_path = os.path.join(custom_path, filename)
     
     try:
-        with open(filename, 'w', encoding='utf-8') as f:
+        with open(full_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        print(f"HTML report saved as: {filename}")
-        return filename
+        print(f"HTML report saved as: {full_path}")
+        return full_path
+    except Exception as e:
+        print(f"Error saving HTML report: {e}")
+        return None
+
+def save_html_report_fixed_location(html_content: str) -> str:
+    """
+    Save HTML content to the specific location you want
+    
+    Args:
+        html_content: HTML string to save
+        
+    Returns:
+        Full path of saved report
+    """
+    # Your specific path
+    file_path = r"D:\ww_github\WorkWise.AI---Hackathon\workwise_AI\workwise\camel_ai\tools_camel\reports_exec\summary_report.html"
+    
+    # Create directory if it doesn't exist
+    directory = os.path.dirname(file_path)
+    Path(directory).mkdir(parents=True, exist_ok=True)
+    
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+        print(f"HTML report saved as: {file_path}")
+        return file_path
     except Exception as e:
         print(f"Error saving HTML report: {e}")
         return None
